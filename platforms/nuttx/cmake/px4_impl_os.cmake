@@ -52,7 +52,21 @@ function(px4_os_add_flags)
 
 	include_directories(BEFORE SYSTEM
 		${PX4_SOURCE_DIR}/platforms/nuttx/NuttX/nuttx/include
+		${PX4_SOURCE_DIR}/platforms/nuttx/NuttX/nuttx/include/cxx
+		${PX4_SOURCE_DIR}/platforms/nuttx/NuttX/include/cxx	# custom new
 	)
+
+        # ESP32-P4 HAL (soc/adc_channel.h etc. used by board_config.h)
+	if(CONFIG_ARCH_CHIP_ESP32P4)
+		set(_ESP32P4_HAL ${PX4_SOURCE_DIR}/platforms/nuttx/NuttX/nuttx/arch/risc-v/src/esp32p4/esp-hal-3rdparty)
+		include_directories(
+			${_ESP32P4_HAL}/components/soc/esp32p4/include
+			${_ESP32P4_HAL}/components/esp_common/include
+			${_ESP32P4_HAL}/nuttx/esp32p4/include
+			${_ESP32P4_HAL}/components/esp_hw_support/include
+			${_ESP32P4_HAL}/components/hal/include
+		)
+	endif()
 
 	if(CONFIG_LIB_TFLM) # Since TFLM uses the standard C++ library, we need to exclude the NuttX C++ include path
 		add_custom_target(copy_header ALL
@@ -178,6 +192,9 @@ function(px4_os_determine_build_chip)
 	elseif(CONFIG_ARCH_CHIP_ESP32)
 		set(CHIP_MANUFACTURER "espressif")
 		set(CHIP "esp32")
+	elseif (CONFIG_ARCH_CHIP_ESP32P4)
+	       set(CHIP_MANUFACTURER "espressif")
+	       set(CHIP "esp32p4")
 	else()
 		message(FATAL_ERROR "Could not determine chip architecture from NuttX config. You may have to add it.")
 	endif()
