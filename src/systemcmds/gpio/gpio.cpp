@@ -185,6 +185,10 @@ exit_failure:
 #endif
 }
 
+
+#if defined(GPIO_PORT_SHIFT) && defined(GPIO_PORT_MASK) && defined(GPIO_PIN_SHIFT) && defined(GPIO_PIN_MASK)
+
+
 int handle_board_ports(bool is_read, int argc, char *argv[])
 {
 	const char *port_string = argv[2];
@@ -288,6 +292,16 @@ int handle_board_ports(bool is_read, int argc, char *argv[])
 
 	return 0;
 }
+
+#else // no port/pin encoding on this arch (e.g. ESP32-P4)
+
+int handle_board_ports(bool is_read, int argc, char *argv[])
+{
+	usage("board port/pin syntax not supported on this chip, use /dev/gpioN");
+	return -1;
+}
+
+#endif
 
 void usage(const char *reason)
 {
