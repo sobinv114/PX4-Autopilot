@@ -256,3 +256,23 @@ parameters:
         4: Input simulation time
       default: 31
       reboot_required: true
+    WS2812_BRIGHT:
+      description:
+        short: NeoPixel LED Brightness
+        long: Sets the brightness of the RGB NeoPixel strip.
+              1 = minimum, 255 = full.
+      type: int32
+      default: 40
+      min: 1
+      max: 255
+      reboot_required: false
+    TONE_VOLUME:
+      description:
+        short: Buzzer master volume
+        long: Scales the loudness of all buzzer tones (tunes and single notes).
+          0 = silent, 100 = full.
+      type: int32
+      default: 100
+      min: 0
+      max: 100
+      reboot_required: false

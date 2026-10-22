@@ -48,8 +48,15 @@
 
 #include "sem.h"
 
+#if defined(__PX4_NUTTX)
+/* NuttX 13 uses POSIX values (O_RDONLY=0, O_WRONLY=1), so use its own definitions */
+#define  PX4_F_RDONLY O_RDONLY
+#define  PX4_F_WRONLY O_WRONLY
+#else
 #define  PX4_F_RDONLY 1
 #define  PX4_F_WRONLY 2
+#endif
+
 
 #ifdef __PX4_NUTTX
 
