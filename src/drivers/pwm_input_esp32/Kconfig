@@ -1,0 +1,7 @@
+menuconfig DRIVERS_PWM_INPUT_ESP32
+	bool "pwm_input (ESP32 MCPWM capture)"
+	default n
+	depends on BOARD_ESPRESSIF
+	---help---
+		PWM input using NuttX MCPWM capture (/dev/capX).
+		Requires CONFIG_ESP_MCPWM_CAPTURE in the NuttX defconfig.

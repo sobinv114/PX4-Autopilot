@@ -70,7 +70,31 @@
 #include <ssarc_dump.h>
 #endif
 
-#include "chip.h"
+#if defined(CONFIG_ARCH_RISCV)
+#  include <nuttx/irq.h>
+#  define REG_R0      REG_X10
+#  define REG_R1      REG_X11
+#  define REG_R2      REG_X12
+#  define REG_R3      REG_X13
+#  define REG_R4      REG_X14
+#  define REG_R5      REG_X15
+#  define REG_R6      REG_X16
+#  define REG_R7      REG_X17
+#  define REG_R8      REG_X8
+#  define REG_R9      REG_X9
+#  define REG_R10     REG_X18
+#  define REG_R11     REG_X19
+#  define REG_R12     REG_X20
+#  define REG_R13     REG_X2
+#  define REG_R14     REG_X1
+#  define REG_R15     REG_EPC
+#  define REG_XPSR    REG_INT_CTX
+#  define REG_BASEPRI REG_INT_CTX
+#  define REG_PRIMASK REG_INT_CTX
+static inline uint32_t getcontrol(void) { return 0; }
+#else
+#  include "chip.h"
+#endif
 
 #if defined(CONSTRAINED_FLASH_NO_HELP)
 #  define hfsyslog(l,format, ...) \
@@ -142,7 +166,11 @@ static int genfault(int fault)
 		break;
 
 	case 2:
-		asm("BX %0" : : "r"(0x0));
+		#if defined(CONFIG_ARCH_RISCV)
+			((void (*)(void))0x0)();
+		#else
+			asm("BX %0" : : "r"(0x0));
+		#endif
 		/* This is not going to happen */
 		break;
 

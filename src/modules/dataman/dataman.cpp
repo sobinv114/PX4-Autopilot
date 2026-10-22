@@ -647,30 +647,27 @@ _ram_shutdown()
 	dm_operations_data.running.store(false);
 }
 
+
 static int
 task_main(int argc, char *argv[])
 {
 	/* Dataman can use disk or RAM */
 	switch (backend) {
 #ifdef CONFIG_DATAMAN_PERSISTENT_STORAGE
-
 	case BACKEND_FILE:
 		g_dm_ops = &dm_file_operations;
 		break;
 #endif
-
 	case BACKEND_RAM:
 		g_dm_ops = &dm_ram_operations;
 		break;
-
 	default:
 		PX4_WARN("No valid backend set.");
 		return -1;
 	}
 
-	/* Initialize global variables */
+	/* Initialize offsets */
 	g_key_offsets[0] = 0;
-
 	for (int i = 0; i < ((int)DM_KEY_NUM_KEYS - 1); i++) {
 		g_key_offsets[i + 1] = g_key_offsets[i] + (g_per_item_max_index[i] * g_per_item_size_with_hdr[i]);
 	}
@@ -684,7 +681,10 @@ task_main(int argc, char *argv[])
 
 	g_task_should_exit.store(false);
 
+	/* 1. ADVERTISE THE REQUEST TOPIC HERE so poll won't return POLLERR */
+	uORB::Publication<dataman_request_s> dataman_req_advertiser{ORB_ID(dataman_request)};
 	uORB::Publication<dataman_response_s> dataman_response_pub{ORB_ID(dataman_response)};
+
 	const orb_sub_t dataman_request_sub = orb_subscribe(ORB_ID(dataman_request));
 
 	if (!orb_sub_valid(dataman_request_sub)) {
@@ -703,40 +703,39 @@ task_main(int argc, char *argv[])
 
 	switch (backend) {
 #ifdef CONFIG_DATAMAN_PERSISTENT_STORAGE
-
 	case BACKEND_FILE:
 		PX4_INFO("data manager file '%s' size is %u bytes", k_data_manager_device_path, max_offset);
-
 		break;
 #endif
-
 	case BACKEND_RAM:
 		PX4_INFO("data manager RAM size is %u bytes", max_offset);
 		break;
-
 	default:
 		break;
 	}
+
 
 	px4_pollfd_struct_t fds;
 	fds.fd = dataman_request_sub;
 	fds.events = POLLIN;
 
-	/* Tell startup that the worker thread has completed its initialization */
+	/* Signal that dataman has initialized */
 	px4_sem_post(&g_init_sema);
 
-	/* Start the endless loop, waiting for then processing work requests */
-	while (true) {
+	while (!g_task_should_exit.load()) {
 
-		ret = px4_poll(&fds, 1, 1000);
+		// px4_pollfd_struct_t fds{};
+		// fds.fd = dataman_request_sub;
+		// fds.events = POLLIN;
 
-		if (ret > 0) {
+		ret = px4_poll(&fds, 1, 100);
+
+		if (ret > 0 && (fds.revents & POLLIN)) {
 
 			bool updated = false;
 			orb_check(dataman_request_sub, &updated);
 
 			if (updated) {
-
 				dataman_request_s request;
 				orb_copy(ORB_ID(dataman_request), dataman_request_sub, &request);
 
@@ -747,17 +746,14 @@ task_main(int argc, char *argv[])
 				response.index = request.index;
 				response.status = dataman_response_s::STATUS_FAILURE_NO_DATA;
 
-				ssize_t result;
+				ssize_t result = -1;
 
 				switch (request.request_type) {
-
 				case DM_GET_ID:
-					if (dataman_clients_count < UINT16_MAX) {
+					if (dataman_clients_count < UINT8_MAX) {
 						response.client_id = dataman_clients_count++;
-						/* Send the timestamp of the request over the data buffer so that the "dataman client"
-						 * can distinguish whether the request was made by it. */
 						memcpy(response.data, &request.timestamp, sizeof(hrt_abstime));
-
+						response.status = dataman_response_s::STATUS_SUCCESS;
 					} else {
 						PX4_ERR("Max Dataman clients reached!");
 					}
@@ -815,22 +811,22 @@ task_main(int argc, char *argv[])
 
 				default:
 					break;
-
 				}
 
 				response.timestamp = hrt_absolute_time();
 				dataman_response_pub.publish(response);
+			} else {
+				/* Prevent busy-looping if poll woke spuriously */
+				px4_usleep(10000); // 10 ms sleep
 			}
-		}
 
-		/* time to go???? */
-		if (g_task_should_exit.load()) {
-			break;
+		} else {
+			/* Timeout or poll error: sleep to avoid consuming CPU */
+			px4_usleep(10000); // 10 ms sleep
 		}
 	}
 
 	orb_unsubscribe(dataman_request_sub);
-
 	g_dm_ops->shutdown();
 
 end:
@@ -844,6 +840,7 @@ end:
 
 	return 0;
 }
+
 
 static int
 start()

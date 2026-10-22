@@ -1,0 +1,5 @@
+menuconfig DRIVERS_TEMPERATURE_SENSOR_AHT10
+	bool "AHT10 temperature and humidity sensor"
+	default n
+	---help---
+		Enable support for AHT10 temperature and humidity sensor

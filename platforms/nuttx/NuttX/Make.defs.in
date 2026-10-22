@@ -58,6 +58,8 @@ else ifeq ($(CONFIG_ARCH_ARMV8R),y)
   include $(TOPDIR)/arch/arm/src/armv8-r/Toolchain.defs
 else ifeq ($(CONFIG_ARCH_ARMV6M),y)
   include $(TOPDIR)/arch/arm/src/armv6-m/Toolchain.defs
+else ifeq ($(CONFIG_ARCH_RISCV),y)
+  include $(TOPDIR)/arch/risc-v/src/common/Toolchain.defs
 endif
 
 # Replace each space separated word in the string that contains "cygdrive"
@@ -89,7 +91,17 @@ CXXINCPATH := $(INCSYSDIR_PREFIX)$(TOPDIR)$(DELIM)include$(DELIM)cxx
 
 ARCHINCLUDES += $(CINCPATH)
 ARCHXXINCLUDES += $(CINCPATH) $(CXXINCPATH)
+
+ifneq ($(CONFIG_ARCH_RISCV),y)
 ARCHSCRIPT = -T$(BOARD_DIR)$(DELIM)scripts$(DELIM)flash.ld
+endif
+
+ARCHTYPE = rv32imac_zicsr_zifencei
+ARCHABITYPE = ilp32
+ARCHCPUFLAGS = -march=$(ARCHTYPE) -mabi=$(ARCHABITYPE) -fno-jump-tables -fno-tree-switch-conversion
+ARCHCFLAGS += $(ARCHCPUFLAGS) -fno-common -fno-strict-aliasing -fomit-frame-pointer -ffunction-sections -fdata-sections
+ARCHCXXFLAGS += $(ARCHCPUFLAGS) -fno-common -fno-strict-aliasing -fomit-frame-pointer -ffunction-sections -fdata-sections
+ARCHOPTIMIZATION = -Os
 
 # PX4 boards may include stm32_rcc.h from board.h. That header is arch-private
 # and lives in arch/arm/src/stm32f7, not in nuttx/include. The recursive NuttX
@@ -146,6 +158,10 @@ FLAGS = $(MAXOPTIMIZATION) -g2 \
 
 FLAGS += $(EXTRAFLAGS)
 
+ifeq ($(CONFIG_ARCH_RISCV),y)
+  FLAGS += -fno-jump-tables -fno-tree-switch-conversion
+endif
+
 # force alignment
 ifeq ($(CONFIG_BOARD_FORCE_ALIGNMENT),y)
 	FLAGS += -mno-unaligned-access
@@ -159,6 +175,7 @@ endif
 CFLAGS = $(ARCHINCLUDES) \
 	-std=gnu11 \
 	${CMAKE_C_FLAGS} \
+	$(ARCHCPUFLAGS) \
 	$(FLAGS) \
 	$(ARCHDEFINES) \
 	-Wno-bad-function-cast \
@@ -180,6 +197,7 @@ CXXFLAGS = $(ARCHXXINCLUDES) \
 	-std=c++14 \
 	-nostdinc++ \
 	${CMAKE_CXX_FLAGS} \
+	$(ARCHCPUFLAGS) \
 	$(FLAGS) \
 	$(ARCHDEFINES) \
 	-fcheck-new \

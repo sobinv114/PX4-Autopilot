@@ -31,6 +31,8 @@
  *
  ****************************************************************************/
 
+
+
 #pragma once
 
 #include <board_config.h>
@@ -39,17 +41,15 @@
 #define CONFIG_FS_PROCFS_MAX_TASKS 64
 #endif
 
-#ifdef CONFIG_SCHED_INSTRUMENTATION
-
 #include <sched.h>
 #include <stdint.h>
 #include <stdbool.h>
 
 struct system_load_taskinfo_s {
-	uint64_t total_runtime{0};		///< Runtime since start (start_time - total_runtime)/(start_time - current_time) = load
-	uint64_t curr_start_time{0};		///< Start time of the current scheduling slot
+	uint64_t total_runtime{0};
+	uint64_t curr_start_time{0};
 	struct tcb_s *tcb {nullptr};
-	bool valid{false};			///< Task is currently active / valid
+	bool valid{false};
 };
 
 struct system_load_s {
@@ -66,9 +66,12 @@ __EXPORT extern struct system_load_s system_load;
 
 __EXPORT void cpuload_initialize_once(void);
 
+#if defined(CONFIG_SCHED_INSTRUMENTATION)
 __EXPORT void cpuload_monitor_start(void);
 __EXPORT void cpuload_monitor_stop(void);
+#else
+static inline void cpuload_monitor_start(void) {}
+static inline void cpuload_monitor_stop(void) {}
+#endif
 
 __END_DECLS
-
-#endif

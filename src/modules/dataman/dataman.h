@@ -38,6 +38,7 @@
  */
 #pragma once
 
+#include "nuttx/config.h"
 #include <string.h>
 #include <navigator/navigation.h>
 #include <uORB/topics/mission.h>

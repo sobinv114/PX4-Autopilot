@@ -198,7 +198,28 @@ typedef struct ssarc_s dump_s;
 		SSARC_DUMP_SIZE_FN4,   /* For the Panic Log use rest of space */  \
 		0                  /* End of table marker */                  \
 	}
-#else /* HAS_SSARC */
+
+#else /* no crash-dump storage (e.g. ESP32-P4 until a RISC-V dump backend exists) */
+
+#include <time.h>
+
+/* Same layout as the bbsram descriptor, which is the only part hardfault_log.c uses */
+typedef struct {
+	uint8_t         fileno;
+	uint16_t        len;
+	uint16_t        flags;
+	struct timespec lastwrite;
+} dump_s;
+
+#ifndef PX4_HF_GETDESC_IOCTL
+#  define PX4_HF_GETDESC_IOCTL 0x4801
+#endif
+
+#define HARDFAULT_DUMP_PATH "/fs/hardfault"
+#define HARDFAULT_REBOOT_PATH HARDFAULT_DUMP_PATH "0"
+#define HARDFAULT_ULOG_PATH   HARDFAULT_DUMP_PATH "3"
+#define HARDFAULT_PATH        HARDFAULT_DUMP_PATH "4"
+#define HARDFAULT_MAX_ULOG_FILE_LEN 64
 
 #define CONFIG_ISTACK_SIZE 0
 #define CONFIG_USTACK_SIZE 0

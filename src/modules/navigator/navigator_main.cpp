@@ -287,7 +287,7 @@ void Navigator::run()
 		} else if (pret < 0) {
 			/* this is undesirable but not much we can do - might want to flag unhappy status */
 			PX4_ERR("poll error %d, %d", pret, errno);
-			px4_usleep(10000);
+			px4_usleep(20000);
 			continue;
 		}
 
@@ -324,6 +324,7 @@ void Navigator::run()
 		// Cache-only wakeups advance the load without running Navigator at Dataman rate.
 		if (!run_navigator_update) {
 			perf_end(_loop_perf);
+			px4_usleep(60000); // <--- YIELD 60ms SO NSH CAN RUN!
 			continue;
 		}
 
@@ -1206,6 +1207,7 @@ void Navigator::run()
 #endif // CONFIG_NAVIGATOR_GEOFENCE_AVOIDANCE
 
 		perf_end(_loop_perf);
+		px4_usleep(30000); // 30ms yield at end of every iteration!
 	}
 }
 
@@ -1324,24 +1326,29 @@ int Navigator::task_spawn(int argc, char *argv[])
 	desc.task_id = px4_task_spawn_cmd("navigator",
 					  SCHED_DEFAULT,
 					  SCHED_PRIORITY_NAVIGATION,
-					  PX4_STACK_ADJUSTED(2230),
+					  PX4_STACK_ADJUSTED(8192),
 					  (px4_main_t)&run_trampoline,
 					  (char *const *)argv);
 
 	if (desc.task_id < 0) {
 		desc.task_id = -1;
+		PX4_ERR("Navigator task spawn FAILED!");
 		return -errno;
 	}
 
+	PX4_INFO("Navigator task spawned with PID %d", desc.task_id);
 	return 0;
 }
 
 Navigator *Navigator::instantiate(int argc, char *argv[])
 {
+	PX4_INFO("Instantiating Navigator class...");
 	Navigator *instance = new Navigator();
 
 	if (instance == nullptr) {
-		PX4_ERR("alloc failed");
+		PX4_ERR("Navigator alloc failed!");
+	} else {
+		PX4_INFO("Navigator instantiated successfully!");
 	}
 
 	return instance;

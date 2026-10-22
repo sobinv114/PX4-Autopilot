@@ -51,7 +51,32 @@
 #include <px4_platform/board_dma_alloc.h>
 #endif /* BOARD_DMA_ALLOC_POOL_SIZE */
 
-#if defined(CONFIG_SCHED_INSTRUMENTATION)
+// #if defined(CONFIG_SCHED_INSTRUMENTATION)
+
+#if !defined(CONFIG_SCHED_INSTRUMENTATION)
+
+
+void init_print_load(struct print_load_s *s)
+{
+}
+
+void print_load(struct print_load_s *print_state)
+{
+}
+
+void print_load(int fd, struct print_load_s *print_state)
+{
+}
+
+void print_load_buffer(char *buffer, int buffer_length, print_load_callback_f cb, void *user,
+		       struct print_load_s *print_state)
+{
+	if (buffer && buffer_length > 0) {
+		buffer[0] = '\0';
+	}
+}
+
+#else
 
 #if !defined(CONFIG_TASK_NAME_SIZE)
 #error print_load_nuttx requires CONFIG_TASK_NAME_SIZE

@@ -1,0 +1,1 @@
+px4_add_library(arch_tone_alarm ToneAlarmInterface.cpp)

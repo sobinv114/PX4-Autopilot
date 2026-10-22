@@ -1,0 +1,10 @@
+module_name: aht10
+parameters:
+- group: Sensors
+  definitions:
+    SENS_EN_AHT10:
+      description:
+        short: Enable AHT10 temperature and humidity sensor (I2C)
+      type: boolean
+      default: 0
+      reboot_required: true

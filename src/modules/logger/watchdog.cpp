@@ -36,16 +36,30 @@
 #include <px4_platform_common/log.h>
 #include <px4_platform_common/tasks.h>
 
-#if defined(__PX4_NUTTX) && !defined(CONFIG_SCHED_INSTRUMENTATION)
-#  error watchdog support requires CONFIG_SCHED_INSTRUMENTATION
-#endif
-
-using namespace time_literals;
+// #if defined(__PX4_NUTTX) && !defined(CONFIG_SCHED_INSTRUMENTATION)
+// #  error watchdog support requires CONFIG_SCHED_INSTRUMENTATION
+// #endif
 
 namespace px4
 {
 namespace logger
 {
+
+#if defined(__PX4_NUTTX) && !defined(CONFIG_SCHED_INSTRUMENTATION)
+
+bool watchdog_update(watchdog_data_t &watchdog_data, bool semaphore_value_saturated)
+{
+	return false;
+}
+
+void watchdog_initialize(const pid_t pid_logger_main, const pthread_t writer_thread, watchdog_data_t &watchdog_data)
+{
+}
+
+#else
+
+using namespace time_literals;
+
 
 bool watchdog_update(watchdog_data_t &watchdog_data, bool semaphore_value_saturated)
 {
@@ -204,6 +218,8 @@ void watchdog_initialize(const pid_t pid_logger_main, const pthread_t writer_thr
 
 #endif /* __PX4_NUTTX */
 }
+
+#endif /* defined(__PX4_NUTTX) && !defined(CONFIG_SCHED_INSTRUMENTATION) */
 
 
 } // namespace logger

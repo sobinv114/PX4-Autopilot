@@ -346,6 +346,88 @@ if(CONFIG_ARCH_CHIP_ESP32)
 			COMMAND du ${PX4_BINARY_OUTPUT} -h
 			DEPENDS px4
 		)
+
+
+
+elseif(CONFIG_ARCH_CHIP_ESP32P4)
+
+	target_link_libraries(nuttx_c INTERFACE nuttx_sched)
+	target_link_libraries(nuttx_arch INTERFACE drivers_board arch_hrt arch_board_reset)
+	target_link_libraries(nuttx_c INTERFACE nuttx_drivers)
+	target_link_libraries(nuttx_drivers INTERFACE nuttx_c nuttx_fs)
+	target_link_libraries(nuttx_xx INTERFACE nuttx_c)
+	target_link_libraries(nuttx_fs INTERFACE nuttx_c nuttx_mm)
+
+	target_link_libraries(px4 PRIVATE
+		-nostartfiles
+		-nodefaultlibs
+		-nostdlib
+		-nostdinc++
+
+		-fno-exceptions
+		-fno-rtti
+
+		# Required linker flags
+		-Wl,--no-check-sections
+		-Wl,--wrap=bootloader_print_banner
+		-Wl,-u,esp_read_mac
+
+		# Force-pull entry point from libarch.a
+		-Wl,--entry=__esp_start
+		-Wl,-u,__esp_start
+		-Wl,-u,exception_common
+		-Wl,-u,_interrupt_handler
+
+		-Wl,-u,esp_read_mac
+		# -Wl,-u,esp_app_desc
+
+		-L${NUTTX_CONFIG_DIR_CYG}/scripts
+		-Wl,-T${NUTTX_CONFIG_DIR_CYG}/scripts/esp32p4.peripherals.ld
+		-T${NUTTX_CONFIG_DIR_CYG}/scripts/esp32p4.rom.ld
+		-T${NUTTX_CONFIG_DIR_CYG}/scripts/esp32p4.rom.api.ld
+		-T${NUTTX_CONFIG_DIR_CYG}/scripts/esp32p4.rom.libc.ld
+		-T${NUTTX_CONFIG_DIR_CYG}/scripts/esp32p4.rom.wdt.ld
+		-T${NUTTX_CONFIG_DIR_CYG}/scripts/esp32p4.rom.version.ld
+		-T${NUTTX_CONFIG_DIR_CYG}/scripts/esp32p4.rom.libc-suboptimal_for_misaligned_mem.ld
+		-T${NUTTX_CONFIG_DIR_CYG}/scripts/esp32p4.rom.systimer.ld
+		-T${NUTTX_CONFIG_DIR_CYG}/scripts/riscv.rom.api.ld
+		-T${NUTTX_CONFIG_DIR_CYG}/scripts/esp32p4_aliases.ld
+		-T${NUTTX_CONFIG_DIR_CYG}/scripts/esp32p4_flat_memory.ld
+		-T${NUTTX_CONFIG_DIR_CYG}/scripts/esp32p4_sections.ld
+
+		-Wl,-Map=${PX4_CONFIG}.map
+		-Wl,--warn-common
+		-Wl,--gc-sections
+
+		-Wl,--start-group
+			${nuttx_libs}
+			${module_libraries}
+		-Wl,--end-group
+		m
+		gcc
+	)
+
+	if(NOT USE_LD_GOLD)
+		target_link_libraries(px4 PRIVATE -Wl,--print-memory-usage)
+	endif()
+
+	target_link_libraries(px4 PRIVATE ${module_libraries})
+        add_link_options(-u esp_system_include_startup_funcs)
+	if(config_romfs_root)
+		add_subdirectory(${PX4_SOURCE_DIR}/ROMFS ${PX4_BINARY_DIR}/ROMFS)
+		target_link_libraries(px4 PRIVATE romfs)
+	endif()
+
+	# add_custom_command(OUTPUT ${PX4_BINARY_OUTPUT}
+	# 	COMMAND esptool.py --chip esp32p4 elf2image --ram-only-header --dont-append-digest -fs 32MB -fm dio -ff 80m -o ${PX4_BINARY_OUTPUT} ${PX4_BINARY_DIR_REL}/${FW_NAME}
+	# 	DEPENDS px4
+	# )
+	add_custom_command(OUTPUT ${PX4_BINARY_OUTPUT}
+		#COMMAND ${CMAKE_OBJCOPY} -O binary ${PX4_BINARY_DIR_REL}/${FW_NAME} ${PX4_BINARY_OUTPUT}
+		COMMAND esptool.py --chip esp32p4 elf2image -o ${PX4_BINARY_OUTPUT} ${PX4_BINARY_DIR_REL}/${FW_NAME}
+		DEPENDS px4
+	)
+
 else()
 
 	target_link_libraries(nuttx_c INTERFACE nuttx_sched) # nxsched_get_streams
