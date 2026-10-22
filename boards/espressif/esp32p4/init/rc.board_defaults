@@ -1,0 +1,113 @@
+#!/bin/sh
+#
+# board specific defaults
+#------------------------------------------------------------------------------
+param set-default SYS_USB_AUTO -1
+param set-default BAT1_V_DIV 1
+param set-default BAT1_A_PER_V 1
+param set-default BAT1_V_EMPTY 3.3
+param set-default BAT1_V_LOAD_DROP 0.100
+param set-default BAT1_V_CHARGED 4.2
+param set-default CBRK_SUPPLY_CHK 894281
+param set-default COM_POWER_COUNT 0
+param set-default COM_ARM_HFLT_CHK 0
+
+param set-default CBRK_AIRSPD_CHK 162128
+param set-default COM_ARM_SDCARD 0
+
+param set-default SYS_AUTOSTART 4001
+param set-default MAV_TYPE 2
+#param set-default EKF2_MULTI_IMU 0
+#param set-default SENS_IMU_MODE 1
+#param set-default EKF2_PREDICT_US 20000
+#param set-default SYS_CTRL_ALLOC 1
+#param set-default SENS_EXT_I2C_PRB 0
+#param set-default COM_ARM_SDCARD 0
+#disable CPU check. default is 90%
+param set-default PWM_MAIN_MIN1 0
+param set-default PWM_MAIN_MIN2 0
+param set-default PWM_MAIN_MIN3 0
+param set-default PWM_MAIN_MIN4 0
+
+param set-default PWM_MAIN_DIS1 0
+param set-default PWM_MAIN_DIS2 0
+param set-default PWM_MAIN_DIS3 0
+param set-default PWM_MAIN_DIS4 0
+
+param set-default DSHOT_CONFIG 600
+
+param set-default PWM_MAIN_FUNC1 101
+param set-default PWM_MAIN_FUNC2 103
+param set-default PWM_MAIN_FUNC3 102
+param set-default PWM_MAIN_FUNC4 104
+param set-default PWM_MAIN_MAX1 2100
+param set-default PWM_MAIN_MAX2 2100
+param set-default PWM_MAIN_MAX3 2100
+param set-default PWM_MAIN_MAX4 2100
+param set-default PWM_MAIN_TIM0 -1
+param set-default PWM_MAIN_TIM1 -1
+
+param set-default SYS_HAS_MAG 1
+param set-default SYS_HAS_BARO 0
+param set-default SENS_EN_AHT10 1
+param set-default ADC_ADS1115_EN 1
+
+param set-default NAV_RCL_ACT 6
+
+param set-default EKF2_HGT_REF 2
+
+param set-default EKF2_OF_CTRL 1
+param set-default EKF2_RNG_CTRL 2
+
+# --- MAVLink instance 0 ---
+param set-default MAV_0_CONFIG 101     # TEL1
+param set-default MAV_0_MODE 2         # 2 = Onboard
+param set-default MAV_0_RATE 0
+param set-default MAV_0_FLOW_CTRL 0    # 0 = off
+param set-default SER_TEL1_BAUD 921600
+
+# --- MAVLink instance 1 (what you enabled in QGC) ---
+param set-default MAV_1_CONFIG 102     # TEL2
+param set-default MAV_1_MODE 2         # 2 = Onboard
+param set-default MAV_1_RATE 0
+param set-default MAV_1_FLOW_CTRL 0
+param set-default SER_TEL2_BAUD 921600
+
+# param set-default MAV_2_CONFIG 103     # TEL3     LP_UART0 ttyS5
+# param set-default MAV_2_MODE 2         # 2 = Onboard
+# param set-default MAV_2_RATE 0
+# param set-default MAV_2_FLOW_CTRL 0
+# param set-default SER_TEL3_BAUD 51600
+
+# --- SD logging ---
+param set-default SDLOG_PROFILE 4095   # all 12 bits ticked (0 to 11)
+param set-default SDLOG_MISSION 1      # 0=Disabled, 1=All mission messages, 2=Geotagging
+param set-default SDLOG_MODE 2         # see the list below
+
+param set-default IMU_GYRO_RATEMAX 400
+param set-default IMU_INTEG_RATE 100
+param set-default COM_CPU_MAX -1
+param set-default COM_RAM_MAX -1
+param set-default BAT1_SOURCE 1
+param set-default BAT1_N_CELLS 1
+#param set IMU_GYRO_RATEMAX 250
+#param set PWM_MAIN_RATE 400
+#param set SYS_DM_BACKEND 2
+param set-default SYS_DM_BACKEND 0
+
+
+# Default MAVLink TELEM1 to full speed and disable flow control
+param set-default MAV_0_RATE 0
+param set-default MAV_0_FLOW_CTRL 0
+
+
+# --- UAVCAN Configuration ---
+param set-default UAVCAN_ENABLE 3
+param set-default UAVCAN_NODE_ID 1
+param set-default UAVCAN_BITRATE 1000000
+
+# Start UAVCAN driver
+if param greater -s UAVCAN_ENABLE 0
+then
+	uavcan start
+fi

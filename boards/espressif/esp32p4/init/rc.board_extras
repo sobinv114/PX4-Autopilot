@@ -1,0 +1,35 @@
+# #!/bin/sh
+# #
+# # PX4 FMUv4 specific board extras init
+# #------------------------------------------------------------------------------
+
+# # Run FrSky Telemetry on Pixracer on the FrSky port if not enabled already
+# # if param compare TEL_FRSKY_CONFIG 0
+# # then
+# # 	frsky_telemetry start -d /dev/ttyS6 -t 15
+# # fi
+
+
+
+#!/bin/sh
+#
+# Board extras init
+#------------------------------------------------------------------------------
+
+# Do not start MAVLink here; it is already started by rc.serial!
+# mavlink start -d /dev/ttyS1 -b 115200 -r 0
+# mavlink start -d /dev/ttyS1 -b 2000000 -r 290000 -m onboard_low_bandwidth -x -z
+
+
+# # if ver hwbasecmp 008 009 00a 010 011
+# # then
+# 	# Start MAVLink on the UART connected to the mission computer
+# 	# mavlink start -d /dev/ttyS1 -b 2000000 -r 290000 -m onboard_low_bandwidth -x -z
+# 	# Ensure nothing else starts on TEL2 (ttyS4)
+# 	# set PRT_TEL2_ 1
+# # fi
+
+
+
+# Take over the WS2812 strip: commander status + led_control
+neopixel start

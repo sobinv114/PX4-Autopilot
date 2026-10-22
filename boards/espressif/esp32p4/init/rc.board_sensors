@@ -1,0 +1,167 @@
+#!/bin/sh
+#
+# PX4 FMUv4 specific board sensors init
+#------------------------------------------------------------------------------
+
+# ============================================
+# Power Monitor Detection
+# ============================================
+set HAVE_PM2 yes
+set HAVE_PM3 yes
+set INA_CONFIGURED no
+
+# Optional: Disable PM2/PM3 if hardware does not have them
+# if mft query -q -k MFT -s MFT_PM2 -v 0
+# then
+# 	set HAVE_PM2 no
+# 	set HAVE_PM3 no
+# fi
+
+# ============================================
+# IMU
+# ============================================
+if ! icm42688p -s -R 2 start
+then
+	if ! icm42605 -s -R 2 start
+	then
+		if ! icm20602 -s -R 2 start
+		then
+			if ! icm42670p -s -R 2 start
+			then
+			        echo "No IMU detected"
+			fi
+		fi
+	fi
+fi
+
+# ============================================
+# Magnetometer
+# ============================================
+if param compare -s SYS_HAS_MAG 1
+then
+	# ist8310 start -I -a 12
+	# HMC5883L on internal I2C bus 1 (addr 0x1e)
+	hmc5883 start -I -b 1
+fi
+
+# ============================================
+# Barometer
+# ============================================
+if param compare -s SYS_HAS_BARO 1
+then
+	spl06 -I -a 119 start
+fi
+
+# ============================================
+# External ADCs
+# ============================================
+if param compare -s ADC_ADS1115_EN 1
+then
+	ads1115 start -I -b 1 -a 0x48
+	board_adc start -n
+else
+	board_adc start
+fi
+
+if param compare -s ADC_TLA2528_EN 1
+then
+	tla2528 start -X
+fi
+
+
+# PCA9685 PWM Expander
+if param greater PCA9685_EN_BUS 0
+then
+	pca9685_pwm_out start -X
+fi
+
+# ============================================
+# Digital Power Monitors (INA226 / INA228 / INA238)
+# ============================================
+
+# INA226
+if param compare SENS_EN_INA226 1
+then
+	ina226 -X -b 1 -t 1 -k start
+
+	if [ $HAVE_PM2 = yes ]
+	then
+		ina226 -X -b 2 -t 2 -k start
+	fi
+
+	if [ $HAVE_PM3 = yes ]
+	then
+		ina226 -X -b 3 -t 3 -k start
+	fi
+
+	set INA_CONFIGURED yes
+fi
+
+# INA228
+if param compare SENS_EN_INA228 1
+then
+	ina228 -X -b 1 -t 1 -k start
+
+	if [ $HAVE_PM2 = yes ]
+	then
+		ina228 -X -b 2 -t 2 -k start
+	fi
+
+	if [ $HAVE_PM3 = yes ]
+	then
+		ina228 -X -b 3 -t 3 -k start
+	fi
+
+	set INA_CONFIGURED yes
+fi
+
+# INA238
+if param compare SENS_EN_INA238 1
+then
+	ina238 -X -b 1 -t 1 -k start
+
+	if [ $HAVE_PM2 = yes ]
+	then
+		ina238 -X -b 2 -t 2 -k start
+	fi
+
+	if [ $HAVE_PM3 = yes ]
+	then
+		ina238 -X -b 3 -t 3 -k start
+	fi
+
+	set INA_CONFIGURED yes
+fi
+
+# Auto-detect INA if none was enabled manually
+if [ $INA_CONFIGURED = no ]
+then
+	i2c_launcher start -b 1 -t 1
+
+	if [ $HAVE_PM2 = yes ]
+	then
+		i2c_launcher start -b 2 -t 2
+	fi
+
+	if [ $HAVE_PM3 = yes ]
+	then
+		i2c_launcher start -b 3 -t 3
+	fi
+fi
+
+# ============================================
+# Other sensors
+# ============================================
+ip5109 start -X
+vl53l0x start -X
+
+
+
+# ASAIR AHT10 temperature/humidity sensor (internal I2C bus 1, addr 0x38)
+if param compare -s SENS_EN_AHT10 1
+then
+	# aht10 start -I -b 1
+	aht10 start -I -b 1 -a 0x38
+fi
+
+#flow3953 start -d /dev/ttyS2
