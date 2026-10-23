@@ -262,7 +262,7 @@ parameters:
         long: Sets the brightness of the RGB NeoPixel strip.
               1 = minimum, 255 = full.
       type: int32
-      default: 40
+      default: 2
       min: 1
       max: 255
       reboot_required: false

@@ -1,0 +1,28 @@
+#pragma once
+
+#include <climits>
+#include <limits.h>
+
+namespace std
+{
+template <typename T>
+struct numeric_limits
+{
+    static constexpr bool is_signed = (static_cast<T>(-1) < static_cast<T>(0));
+
+    static constexpr T min() noexcept
+    {
+        return is_signed ? static_cast<T>(static_cast<T>(1) << (sizeof(T) * 8 - 1)) : static_cast<T>(0);
+    }
+
+    static constexpr T max() noexcept
+    {
+        return is_signed ? static_cast<T>(~(static_cast<T>(1) << (sizeof(T) * 8 - 1))) : static_cast<T>(~static_cast<T>(0));
+    }
+
+    static constexpr T lowest() noexcept
+    {
+        return min();
+    }
+};
+}
