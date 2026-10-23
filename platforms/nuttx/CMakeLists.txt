@@ -422,11 +422,7 @@ elseif(CONFIG_ARCH_CHIP_ESP32P4)
 	# 	COMMAND esptool.py --chip esp32p4 elf2image --ram-only-header --dont-append-digest -fs 32MB -fm dio -ff 80m -o ${PX4_BINARY_OUTPUT} ${PX4_BINARY_DIR_REL}/${FW_NAME}
 	# 	DEPENDS px4
 	# )
-	# add_custom_command(OUTPUT ${PX4_BINARY_OUTPUT}
-	# 	#COMMAND ${CMAKE_OBJCOPY} -O binary ${PX4_BINARY_DIR_REL}/${FW_NAME} ${PX4_BINARY_OUTPUT}
-	# 	COMMAND esptool --chip esp32p4 elf2image -o ${PX4_BINARY_OUTPUT} ${PX4_BINARY_DIR_REL}/${FW_NAME}
-	# 	DEPENDS px4
-	# )
+
 	add_custom_command(OUTPUT ${PX4_BINARY_OUTPUT}
 		COMMAND esptool  --chip esp32p4 elf2image --ram-only-header  -fs 32MB -fm dio -ff 80m -o ${PX4_BINARY_OUTPUT} ${PX4_BINARY_DIR_REL}/${FW_NAME}
 		DEPENDS px4
