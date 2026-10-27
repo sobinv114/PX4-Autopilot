@@ -72,7 +72,7 @@
 #define PX4IO_SERIAL_DEVICE            "/dev/ttyS2"         /* Corresponding to UART2 */
 #define PX4IO_SERIAL_TX_GPIO           GPIO_UART2_TX
 #define PX4IO_SERIAL_RX_GPIO           GPIO_UART2_RX
-#define PX4IO_SERIAL_BITRATE           1000000   /* Temporarily change from 1500000 */
+#define PX4IO_SERIAL_BITRATE           1500000   /* Temporarily change from 1500000 */
 
 
 /* ========================================================================= */

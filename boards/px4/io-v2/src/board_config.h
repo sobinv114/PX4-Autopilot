@@ -1,3 +1,4 @@
+
 /****************************************************************************
  *
  *   Copyright (c) 2013, 2014 PX4 Development Team. All rights reserved.
@@ -62,7 +63,7 @@
 #define PX4FMU_SERIAL_TX_DMA	DMACHAN_USART2_TX
 #define PX4FMU_SERIAL_RX_DMA	DMACHAN_USART2_RX
 #define PX4FMU_SERIAL_CLOCK	STM32_PCLK1_FREQUENCY
-#define PX4FMU_SERIAL_BITRATE	1000000   /* Temporarily change from 1500000 */  //impossibe to deo 1.5mbps with Mhz clock
+#define PX4FMU_SERIAL_BITRATE	1500000
 
 /******************************************************************************
  * GPIOS
@@ -70,15 +71,13 @@
 
 /* LEDS  **********************************************************************/
 
+#define GPIO_LED_BLUE   (GPIO_OUTPUT|GPIO_CNF_OUTPP|GPIO_MODE_50MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTB|GPIO_PIN14) // IO-LED_BLUE or IMU_TEMPERATURE_CONTROL on Pixhawk 2.1
+#define GPIO_LED_AMBER  (GPIO_OUTPUT|GPIO_CNF_OUTPP|GPIO_MODE_50MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTB|GPIO_PIN15) // IO-LED_AMBER
+#define GPIO_LED_SAFETY (GPIO_OUTPUT|GPIO_CNF_OUTPP|GPIO_MODE_50MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTB|GPIO_PIN13) // IO-LED_SAFETY
+#define GPIO_LED_GREEN  (GPIO_OUTPUT|GPIO_CNF_OUTOD|GPIO_MODE_50MHz|GPIO_OUTPUT_SET|GPIO_PORTC|GPIO_PIN13) // IO-LED_POWER_BREATHING
 
-#define GPIO_LED_BLUE          (GPIO_OUTPUT|GPIO_CNF_OUTPP|GPIO_MODE_50MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTB|GPIO_PIN14) // IO-LED_BLUE or IMU_TEMPERATURE_CONTROL on Pixhawk 2.1
-#define GPIO_LED_AMBER         (GPIO_OUTPUT|GPIO_CNF_OUTPP|GPIO_MODE_50MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTB|GPIO_PIN15) // IO-LED_AMBER
-#define GPIO_LED_SAFETY        (GPIO_OUTPUT|GPIO_CNF_OUTPP|GPIO_MODE_50MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTB|GPIO_PIN13) // IO-LED_SAFETY
-
-#define GPIO_LED_GREEN  (GPIO_OUTPUT|GPIO_CNF_OUTOD|GPIO_MODE_50MHz|GPIO_OUTPUT_SET|GPIO_PORTA|GPIO_PIN11) // IO-LED_POWER_BREATHING
-
-// #define GPIO_PC14 (GPIO_INPUT|GPIO_CNF_INFLOAT|GPIO_MODE_INPUT|GPIO_PORTC|GPIO_PIN14)
-// #define GPIO_PC15 (GPIO_INPUT|GPIO_CNF_INFLOAT|GPIO_MODE_INPUT|GPIO_PORTC|GPIO_PIN15)
+#define GPIO_PC14 (GPIO_INPUT|GPIO_CNF_INFLOAT|GPIO_MODE_INPUT|GPIO_PORTC|GPIO_PIN14)
+#define GPIO_PC15 (GPIO_INPUT|GPIO_CNF_INFLOAT|GPIO_MODE_INPUT|GPIO_PORTC|GPIO_PIN15)
 
 /*  PixHawk 1:
  *      PC14 Floating
@@ -93,16 +92,12 @@
 # define SENSE_PH1 0b10 /* Floating pulled as set */
 # define SENSE_PH2 0b01 /* Driven as tied */
 
-#define SENSE_PIXHAWK2() 0// (((stm32_gpioread(GPIO_SENSE_PC15_UP) << 1 | stm32_gpioread(GPIO_SENSE_PC14_DN)) == SENSE_PH2) ? 1 : 0)
+#define SENSE_PIXHAWK2() (((stm32_gpioread(GPIO_SENSE_PC15_UP) << 1 | stm32_gpioread(GPIO_SENSE_PC14_DN)) == SENSE_PH2) ? 1 : 0)
 
-// #define LED_BLUE(on_true)   (SENSE_PIXHAWK2() ? (void)0 : stm32_gpiowrite(GPIO_LED_BLUE, !(on_true)))
-// #define LED_AMBER(on_true)  stm32_gpiowrite(GPIO_LED_AMBER, !(on_true))
-// #define LED_SAFETY(on_true) stm32_gpiowrite(GPIO_LED_SAFETY, !(on_true))
-/* Remove the '!' so HIGH = ON */
-#define LED_BLUE(on_true)      stm32_gpiowrite(GPIO_LED_BLUE, (on_true))
-#define LED_AMBER(on_true)     stm32_gpiowrite(GPIO_LED_AMBER, (on_true))
-#define LED_SAFETY(on_true)    stm32_gpiowrite(GPIO_LED_SAFETY, (on_true))
-#define LED_GREEN(on_true)     stm32_gpiowrite(GPIO_LED_GREEN, (on_true))
+#define LED_BLUE(on_true)   (SENSE_PIXHAWK2() ? (void)0 : stm32_gpiowrite(GPIO_LED_BLUE, (on_true)))
+#define LED_AMBER(on_true)  stm32_gpiowrite(GPIO_LED_AMBER, (on_true))
+#define LED_SAFETY(on_true) stm32_gpiowrite(GPIO_LED_SAFETY, (on_true))
+#define LED_GREEN(on_true)   stm32_gpiowrite(GPIO_LED_GREEN, !(on_true))
 
 
 /* HEATER */

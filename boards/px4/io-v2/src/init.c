@@ -87,8 +87,8 @@ __EXPORT void stm32_boardinitialize(void)
 	/* configure GPIOs */
 
 	/* Set up for sensing HW */
-	// stm32_configgpio(GPIO_SENSE_PC14_DN);
-	// stm32_configgpio(GPIO_SENSE_PC15_UP);
+	stm32_configgpio(GPIO_SENSE_PC14_DN);
+	stm32_configgpio(GPIO_SENSE_PC15_UP);
 
 	/* some boards such as Pixhawk 2.1 made
 	the unfortunate choice to combine the blue led channel with
@@ -102,8 +102,8 @@ __EXPORT void stm32_boardinitialize(void)
 		stm32_configgpio(GPIO_LED_BLUE);
 	}
 
-	// stm32_configgpio(GPIO_PC14);
-	// stm32_configgpio(GPIO_PC15);
+	stm32_configgpio(GPIO_PC14);
+	stm32_configgpio(GPIO_PC15);
 
 
 	/* LEDS - default to off */
