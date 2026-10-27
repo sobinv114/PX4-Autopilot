@@ -69,10 +69,10 @@
 /* Add static MFT so PX4IO is always “present” */
 #define BOARD_HAS_STATIC_MANIFEST  1
 #define PX4_MFT_HW_SUPPORTED_PX4_MFT_PX4IO  1
-#define PX4IO_SERIAL_DEVICE            "/dev/ttyS4"         /* Corresponding to UART1 */
-#define PX4IO_SERIAL_TX_GPIO           GPIO_UART4_TX
-#define PX4IO_SERIAL_RX_GPIO           GPIO_UART4_RX
-#define PX4IO_SERIAL_BITRATE           1500000               /* 1.5 Mbps max rate for IO */
+#define PX4IO_SERIAL_DEVICE            "/dev/ttyS2"         /* Corresponding to UART2 */
+#define PX4IO_SERIAL_TX_GPIO           GPIO_UART2_TX
+#define PX4IO_SERIAL_RX_GPIO           GPIO_UART2_RX
+#define PX4IO_SERIAL_BITRATE           1000000   /* Temporarily change from 1500000 */
 
 
 /* ========================================================================= */
@@ -85,8 +85,8 @@
 #define GPIO_UART1_TX                   4
 #define GPIO_UART1_RX                   5
 
-#define GPIO_UART2_TX                   46
-#define GPIO_UART2_RX                   47
+#define GPIO_UART2_TX                   50
+#define GPIO_UART2_RX                   49
 
 #define GPIO_UART3_TX                   48
 #define GPIO_UART3_RX                   49

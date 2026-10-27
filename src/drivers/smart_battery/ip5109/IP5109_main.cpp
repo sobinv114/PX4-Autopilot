@@ -90,64 +90,41 @@ void IP5109::RunImpl()
 
 
 	_battery_report.timestamp = hrt_absolute_time();
-
 	_battery_report.id = 1;
-
 	_battery_report.connected = true;
+	_battery_report.source = battery_status_s::SOURCE_EXTERNAL;
+	_battery_report.cell_count = 1;
 
-	_battery_report.voltage_cell_v[0] = battery_voltage / 1000.0f;
-
-	// Convert millivolts to volts.
 	_battery_report.voltage_v = battery_voltage / 1000.0f;
-	_battery_report.voltage_filtered_v = _battery_report.voltage_v;
-
-	_battery_report.current_a = (battery_current/ 1000.0f);
-	_battery_report.current_filtered_a = _battery_report.current_a;
-
+	_battery_report.voltage_cell_v[0] = _battery_report.voltage_v;
+	_battery_report.current_a = battery_current / 1000.0f;
 	_battery_report.current_average_a = _battery_report.current_a;
 
-	// Read run time to empty (minutes).
 	_battery_report.time_remaining_s = _battery_report.voltage_v / 4.2f * 10000;
-
-	// Read average time to empty (minutes).
 	_battery_report.average_time_to_empty = _battery_report.voltage_v / 4.2f * 10000;
-
-	// Calculate total discharged amount in mah.
 	_battery_report.discharged_mah = 2000;
-
-	// Normalize 0.0 to 1.0
-	if (battery_voltage - 3200 > 1000) {
-		_battery_report.remaining = 1;
-
-	} else if (battery_voltage - 3200 < 0) {
-		_battery_report.remaining = 0;
-
-	} else{
-	_battery_report.remaining = (battery_voltage - 3200) / (4200 - 3200);
-	}
-
-	// Read battery temperature and covert to Celsius.
 	_battery_report.temperature = 30;
-
-	// Only publish if no errors.
-
 	_battery_report.capacity = 2000;
 	_battery_report.cycle_count = 1;
-	_battery_report.serial_number = 11451;
-	_battery_report.max_cell_voltage_delta = 1.5;
-	_battery_report.cell_count = 1;
+	_battery_report.max_cell_voltage_delta = 1.5f;
 	_battery_report.state_of_health = 100;
 
-	// TODO: This critical setting should be set with BMS info or through a paramter
-	// Setting a hard coded BATT_CELL_VOLTAGE_THRESHOLD_FAILED may not be appropriate
-	//if (_lifetime_max_delta_cell_voltage > BATT_CELL_VOLTAGE_THRESHOLD_FAILED) {
-	//	_battery_report.warning = battery_status_s::BATTERY_WARNING_CRITICAL;
+	if (battery_voltage - 3200 > 1000) {
+		_battery_report.remaining = 1.f;
 
-	if (battery_voltage < low_voltage_warn * 1000.0f) {
-		_battery_report.warning = battery_status_s::BATTERY_WARNING_LOW;
+	} else if (battery_voltage - 3200 < 0) {
+		_battery_report.remaining = 0.f;
+
+	} else {
+		_battery_report.remaining = (battery_voltage - 3200) / (4200 - 3200);
 	}
 
-	//_battery_report.interface_error = perf_event_count(_interface->_interface_errors);
+	if (battery_voltage < low_voltage_warn * 1000.0f) {
+		_battery_report.warning = battery_status_s::WARNING_LOW;
+
+	} else {
+		_battery_report.warning = battery_status_s::WARNING_NONE;
+	}
 
 	_to_battery_report.publish(_battery_report);
 

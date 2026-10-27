@@ -70,9 +70,10 @@ fi
 
 
 # PCA9685 PWM Expander
-if param greater PCA9685_EN_BUS 0
+if param greater PCA9685_EN_BUS 1
 then
-	pca9685_pwm_out start -X
+	# pca9685_pwm_out start -X
+	pca9685_pwm_out start -I -b 2 -a 0x40
 fi
 
 # ============================================

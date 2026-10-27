@@ -127,7 +127,8 @@ int PCA9685::updateFreq(float freq)
 	}
 
 	currentFreq = (float)PCA9685_CLOCK_REFERENCE / (float)((divider + 1) * 4096);
-	PX4_INFO("PCA9685 PWM frequency: target=%.2f real=%.2f", (double)freq, (double)currentFreq);
+	// PX4_INFO("PCA9685 PWM frequency: target=%.2f real=%.2f", (double)freq, (double)currentFreq);
+	PX4_DEBUG("PCA9685 PWM frequency: target=%.2f real=%.2f", (double)freq, (double)currentFreq);
 
 	return setDivider(divider);
 }
@@ -203,32 +204,62 @@ int PCA9685::probe()
 	return PX4_ERROR;
 }
 
+// int PCA9685::writePWM(uint8_t idx, const uint16_t *value, uint8_t num)
+// {
+// 	uint8_t buf[PCA9685_PWM_CHANNEL_COUNT * PCA9685_REG_LED_INCREMENT + 1] = {};
+// 	buf[0] = PCA9685_REG_LED0 + PCA9685_REG_LED_INCREMENT * idx;
+
+// 	for (int i = 0; i < num; ++i) {
+// 		buf[1 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
+
+// 		if (value[i] == 0) {
+// 			buf[2 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
+// 			buf[3 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
+// 			buf[4 + i * PCA9685_REG_LED_INCREMENT] = PCA9685_LED_ON_FULL_ON_OFF_MASK;
+
+// 		} else if (value[i] == 4096) {
+// 			buf[2 + i * PCA9685_REG_LED_INCREMENT] = PCA9685_LED_ON_FULL_ON_OFF_MASK;
+// 			buf[3 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
+// 			buf[4 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
+
+// 		} else {
+// 			buf[2 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
+// 			buf[3 + i * PCA9685_REG_LED_INCREMENT] = (uint8_t)(value[i] & 0xFF);
+// 			buf[4 + i * PCA9685_REG_LED_INCREMENT] = (uint8_t)(value[i] >> 8);
+// 		}
+// 	}
+
+// 	return transfer(buf, num * PCA9685_REG_LED_INCREMENT + 1, nullptr, 0);
+// }
+
+
 int PCA9685::writePWM(uint8_t idx, const uint16_t *value, uint8_t num)
 {
-	uint8_t buf[PCA9685_PWM_CHANNEL_COUNT * PCA9685_REG_LED_INCREMENT + 1] = {};
-	buf[0] = PCA9685_REG_LED0 + PCA9685_REG_LED_INCREMENT * idx;
+	constexpr uint8_t kChunk = 4;   // 4 channels * 4 bytes + 1 register byte = 17 bytes
+	int ret = PX4_OK;
 
-	for (int i = 0; i < num; ++i) {
-		buf[1 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
+	for (uint8_t start = 0; start < num; start += kChunk) {
+		const uint8_t n = (num - start) < kChunk ? (num - start) : kChunk;
+		uint8_t buf[kChunk * PCA9685_REG_LED_INCREMENT + 1] = {};
+		buf[0] = PCA9685_REG_LED0 + PCA9685_REG_LED_INCREMENT * (idx + start);
 
-		if (value[i] == 0) {
-			buf[2 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
-			buf[3 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
-			buf[4 + i * PCA9685_REG_LED_INCREMENT] = PCA9685_LED_ON_FULL_ON_OFF_MASK;
+		for (uint8_t i = 0; i < n; ++i) {
+			uint8_t *p = &buf[1 + i * PCA9685_REG_LED_INCREMENT];
+			const uint16_t v = value[start + i];
 
-		} else if (value[i] == 4096) {
-			buf[2 + i * PCA9685_REG_LED_INCREMENT] = PCA9685_LED_ON_FULL_ON_OFF_MASK;
-			buf[3 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
-			buf[4 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
-
-		} else {
-			buf[2 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
-			buf[3 + i * PCA9685_REG_LED_INCREMENT] = (uint8_t)(value[i] & 0xFF);
-			buf[4 + i * PCA9685_REG_LED_INCREMENT] = (uint8_t)(value[i] >> 8);
+			if (v == 0) {            // full off
+				p[0] = 0; p[1] = 0; p[2] = 0; p[3] = PCA9685_LED_ON_FULL_ON_OFF_MASK;
+			} else if (v == 4096) {  // full on
+				p[0] = 0; p[1] = PCA9685_LED_ON_FULL_ON_OFF_MASK; p[2] = 0; p[3] = 0;
+			} else {
+				p[0] = 0; p[1] = 0; p[2] = v & 0xFF; p[3] = v >> 8;
+			}
 		}
+
+		ret |= transfer(buf, n * PCA9685_REG_LED_INCREMENT + 1, nullptr, 0);
 	}
 
-	return transfer(buf, num * PCA9685_REG_LED_INCREMENT + 1, nullptr, 0);
+	return ret;
 }
 
 int PCA9685::setDivider(uint8_t value)

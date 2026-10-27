@@ -56,13 +56,21 @@
 
 /* On-board crystal frequency is 24MHz (HSE) */
 
-#define STM32_BOARD_XTAL        24000000ul
+/* Blue Pill: 8 MHz crystal (HSE). Stock io-v2 has 24 MHz. */
+#define STM32_BOARD_XTAL        8000000ul
 
-/* Use the HSE output as the system clock */
+/* PLL: HSE / 1 x 3 = 24 MHz, so everything below keeps the stock 24 MHz timing */
+#define STM32_CFGR_PLLSRC       RCC_CFGR_PLLSRC
+#define STM32_CFGR_PLLXTPRE     0
+#define STM32_CFGR2_PREDIV1     0                         /* <-- ADD THIS LINE (no HSE prescaler) */
+#define STM32_CFGR_PLLMUL       RCC_CFGR_PLLMUL_CLKx3
+#define STM32_PLL_FREQUENCY     (3 * STM32_BOARD_XTAL)
 
-#define STM32_SYSCLK_SW         RCC_CFGR_SW_HSE
-#define STM32_SYSCLK_SWS        RCC_CFGR_SWS_HSE
-#define STM32_SYSCLK_FREQUENCY  STM32_BOARD_XTAL
+
+/* SYSCLK = PLL */
+#define STM32_SYSCLK_SW         RCC_CFGR_SW_PLL
+#define STM32_SYSCLK_SWS        RCC_CFGR_SWS_PLL
+#define STM32_SYSCLK_FREQUENCY  STM32_PLL_FREQUENCY
 
 /* AHB clock (HCLK) is SYSCLK (24MHz) */
 

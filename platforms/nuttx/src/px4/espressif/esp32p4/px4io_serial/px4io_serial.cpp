@@ -31,228 +31,6 @@
 //  *
 //  ****************************************************************************/
 
-// /**
-//  * @file px4io_serial.cpp
-//  *
-//  * Serial interface for PX4IO on ESP32-P4 (NuttX POSIX UART).
-//  */
-
-// #include <px4_arch/px4io_serial.h>
-
-// #include <fcntl.h>
-// #include <termios.h>
-// #include <unistd.h>
-// #include <errno.h>
-// #include <string.h>
-// #include <sys/select.h>
-// #include <sys/time.h>
-
-// #include <px4_platform_common/log.h>
-// #include <board_config.h>
-
-// #ifndef PX4IO_SERIAL_DEVICE
-// # error "Board must define PX4IO_SERIAL_DEVICE (e.g. \"/dev/ttyS1\")"
-// #endif
-
-// #ifndef PX4IO_SERIAL_BAUD
-// # define PX4IO_SERIAL_BAUD 1500000
-// #endif
-
-// ArchPX4IOSerial::ArchPX4IOSerial()
-// {
-// }
-
-// ArchPX4IOSerial::~ArchPX4IOSerial()
-// {
-// 	if (_fd >= 0) {
-// 		::close(_fd);
-// 		_fd = -1;
-// 	}
-// }
-
-// int
-// ArchPX4IOSerial::init()
-// {
-// 	/* Hand packet buffer to the base class (creates bus semaphore). */
-// 	int r = PX4IO_serial::init(&_io_buffer);
-
-// 	if (r != 0) {
-// 		return r;
-// 	}
-
-// 	_fd = ::open(PX4IO_SERIAL_DEVICE, O_RDWR | O_NOCTTY | O_NONBLOCK);
-
-// 	if (_fd < 0) {
-// 		PX4_ERR("PX4IO open %s failed: %d", PX4IO_SERIAL_DEVICE, errno);
-// 		return -errno;
-// 	}
-
-// 	struct termios opt;
-
-// 	if (tcgetattr(_fd, &opt) < 0) {
-// 		::close(_fd);
-// 		_fd = -1;
-// 		return -errno;
-// 	}
-
-// 	cfmakeraw(&opt);
-// 	cfsetispeed(&opt, PX4IO_SERIAL_BAUD);
-// 	cfsetospeed(&opt, PX4IO_SERIAL_BAUD);
-
-// 	opt.c_cflag |= (CLOCAL | CREAD);
-// 	opt.c_cflag &= ~(CRTSCTS | CSIZE | PARENB);
-// 	opt.c_cflag |= CS8;
-// 	opt.c_cc[VMIN]  = 0;
-// 	opt.c_cc[VTIME] = 0;	/* timeouts via select() */
-
-// 	if (tcsetattr(_fd, TCSANOW, &opt) < 0) {
-// 		::close(_fd);
-// 		_fd = -1;
-// 		return -errno;
-// 	}
-
-// 	tcflush(_fd, TCIOFLUSH);
-
-// 	PX4_INFO("PX4IO serial on %s @ %d baud", PX4IO_SERIAL_DEVICE, PX4IO_SERIAL_BAUD);
-// 	return OK;
-// }
-
-// int
-// ArchPX4IOSerial::ioctl(unsigned operation, unsigned &arg)
-// {
-// 	(void)operation;
-// 	(void)arg;
-// 	return -ENOTTY;
-// }
-
-// int
-// ArchPX4IOSerial::_bus_exchange(IOPacket *_packet)
-// {
-// 	if (_fd < 0 || _packet == nullptr) {
-// 		return -EINVAL;
-// 	}
-
-// 	const size_t tx_len = PKT_SIZE(*_packet);
-
-// 	/* ---------- TX ---------- */
-// 	{
-// 		const uint8_t *tx = reinterpret_cast<const uint8_t *>(_packet);
-// 		size_t written = 0;
-
-// 		while (written < tx_len) {
-// 			ssize_t n = ::write(_fd, tx + written, tx_len - written);
-
-// 			if (n > 0) {
-// 				written += (size_t)n;
-// 				continue;
-// 			}
-
-// 			if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-// 				fd_set wfds;
-// 				FD_ZERO(&wfds);
-// 				FD_SET(_fd, &wfds);
-// 				struct timeval tv = { 0, 2000 }; /* 2 ms */
-
-// 				if (select(_fd + 1, nullptr, &wfds, nullptr, &tv) <= 0) {
-// 					perf_count(_pc_timeouts);
-// 					return -ETIMEDOUT;
-// 				}
-
-// 				continue;
-// 			}
-
-// 			perf_count(_pc_uerrs);
-// 			return -errno;
-// 		}
-// 	}
-
-// 	/* ---------- RX ---------- */
-// 	{
-// 		uint8_t *rx = reinterpret_cast<uint8_t *>(_packet);
-// 		size_t received = 0;
-// 		size_t expect = sizeof(IOPacket); /* refined after header */
-
-// 		while (received < expect) {
-// 			fd_set rfds;
-// 			FD_ZERO(&rfds);
-// 			FD_SET(_fd, &rfds);
-// 			struct timeval tv;
-// 			tv.tv_sec  = 0;
-// 			tv.tv_usec = EXCHANGE_TIMEOUT_MS * 1000;
-
-// 			int sel = select(_fd + 1, &rfds, nullptr, nullptr, &tv);
-
-// 			if (sel == 0) {
-// 				perf_count(_pc_timeouts);
-// 				return -ETIMEDOUT;
-// 			}
-
-// 			if (sel < 0) {
-// 				perf_count(_pc_uerrs);
-// 				return -errno;
-// 			}
-
-// 			ssize_t n = ::read(_fd, rx + received, expect - received);
-
-// 			if (n > 0) {
-// 				received += (size_t)n;
-
-// 				/* After header (4 bytes) we know real packet length. */
-// 				if (received >= 4) {
-// 					size_t pkt = PKT_SIZE(*_packet);
-
-// 					if (pkt < 4 || pkt > sizeof(IOPacket)) {
-// 						perf_count(_pc_protoerrs);
-// 						return -EIO;
-// 					}
-
-// 					expect = pkt;
-// 				}
-
-// 				continue;
-// 			}
-
-// 			if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-// 				continue;
-// 			}
-
-// 			if (n == 0) {
-// 				continue;
-// 			}
-
-// 			perf_count(_pc_uerrs);
-// 			return -errno;
-// 		}
-// 	}
-
-// 	/* CRC is checked by the base class after we return OK. */
-// 	return OK;
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /**
  * @file px4io_serial.cpp
@@ -273,6 +51,8 @@
 #include <sys/time.h>
 #include <px4_platform_common/log.h>
 #include <board_config.h>
+#include <sys/types.h>
+#include <signal.h>
 
 #ifndef PX4IO_SERIAL_DEVICE
 # error "Board must define PX4IO_SERIAL_DEVICE (e.g. \"/dev/ttyS1\")"
@@ -280,9 +60,11 @@
 
 
 
-#define PX4IO_EXCHANGE_TIMEOUT_NS	(10LL * 1000 * 1000)	/* 10 ms, same as STM32 */
+#define PX4IO_EXCHANGE_TIMEOUT_NS	(20LL * 1000 * 1000)	/* 10 ms, same as STM32 20 ms for esp32p4*/
 
 uint8_t ArchPX4IOSerial::_io_buffer_storage[ArchPX4IOSerial::kBufSize];
+
+static size_t s_rx_total;	/* DEBUG: bytes received in the current exchange */
 
 /* ---- time helpers ------------------------------------------------------ */
 
@@ -314,43 +96,44 @@ ArchPX4IOSerial::ArchPX4IOSerial()
 
 ArchPX4IOSerial::~ArchPX4IOSerial()
 {
-	if (_fd >= 0) {
+	/* only close an fd that belongs to the calling task group */
+	if (_fd >= 0 && _fd_owner == getpid()) {
 		::close(_fd);
-		_fd = -1;
 	}
+
+	_fd = -1;
 }
 
 int ArchPX4IOSerial::init()
 {
-	/* initialize base implementation */
 	int r = PX4IO_serial::init((IOPacket *)&_io_buffer_storage[0]);
 
 	if (r != 0) {
 		return r;
 	}
 
-	/* O_NONBLOCK so that poll() is the only thing that controls timeouts */
-	_fd = ::open(PX4IO_SERIAL_DEVICE, O_RDWR | O_NOCTTY | O_NONBLOCK);
+	return _open_port();
+}
 
-	if (_fd < 0) {
+int ArchPX4IOSerial::_open_port()
+{
+	int fd = ::open(PX4IO_SERIAL_DEVICE, O_RDWR | O_NOCTTY | O_NONBLOCK);
+
+	if (fd < 0) {
 		return -errno;
 	}
 
 	struct termios t;
 
-	if (tcgetattr(_fd, &t) != 0) {
+	if (tcgetattr(fd, &t) != 0) {
 		int err = errno;
-		::close(_fd);
-		_fd = -1;
+		::close(fd);
 		return -err;
 	}
 
-	/* raw mode */
 	t.c_iflag = 0;
 	t.c_oflag = 0;
 	t.c_lflag = 0;
-
-	/* 8N1, receiver on, ignore modem lines, no flow control */
 	t.c_cflag &= ~(CSIZE | CSTOPB | PARENB);
 #ifdef CRTS_IFLOW
 	t.c_cflag &= ~CRTS_IFLOW;
@@ -359,18 +142,20 @@ int ArchPX4IOSerial::init()
 	t.c_cflag &= ~CCTS_OFLOW;
 #endif
 	t.c_cflag |= (CS8 | CREAD | CLOCAL);
-
 	cfsetspeed(&t, PX4IO_SERIAL_BITRATE);
 
-	if (tcsetattr(_fd, TCSANOW, &t) != 0) {
+	if (tcsetattr(fd, TCSANOW, &t) != 0) {
 		int err = errno;
-		::close(_fd);
-		_fd = -1;
+		::close(fd);
 		return -err;
 	}
 
+	_fd = fd;
+	_fd_owner = getpid();
+	PX4_INFO("px4io uart opened: fd=%d owner=%d baud=%u", fd, (int)_fd_owner, (unsigned)PX4IO_SERIAL_BITRATE);
 	return 0;
 }
+
 
 int ArchPX4IOSerial::ioctl(unsigned operation, unsigned &arg)
 {
@@ -385,9 +170,8 @@ void ArchPX4IOSerial::_drain_rx()
 {
 	uint8_t scratch[32];
 
-	/* bounded, so a babbling line can't hold us here forever */
 	for (int i = 0; i < 16; i++) {
-		ssize_t n = ::read(_fd, scratch, sizeof(scratch));
+		ssize_t n = ::read(_xfd, scratch, sizeof(scratch));
 
 		if (n <= 0) {
 			break;
@@ -400,7 +184,7 @@ int ArchPX4IOSerial::_write_all(const uint8_t *buf, size_t len, const struct tim
 	size_t sent = 0;
 
 	while (sent < len) {
-		ssize_t n = ::write(_fd, buf + sent, len - sent);
+		ssize_t n = ::write(_xfd, buf + sent, len - sent);
 
 		if (n > 0) {
 			sent += n;
@@ -408,12 +192,12 @@ int ArchPX4IOSerial::_write_all(const uint8_t *buf, size_t len, const struct tim
 		}
 
 		if (n < 0 && errno != EINTR && errno != EAGAIN) {
+			PX4_ERR("_write_all failed: errno=%d (%s)", errno, strerror(errno));
 			return -EIO;
 		}
 
-		/* TX queue full: wait for space, but only until the deadline */
 		struct pollfd pfd;
-		pfd.fd = _fd;
+		pfd.fd = _xfd;
 		pfd.events = POLLOUT;
 		pfd.revents = 0;
 
@@ -431,7 +215,7 @@ int ArchPX4IOSerial::_read_exact(uint8_t *buf, size_t len, const struct timespec
 
 	while (got < len) {
 		struct pollfd pfd;
-		pfd.fd = _fd;
+		pfd.fd = _xfd;
 		pfd.events = POLLIN;
 		pfd.revents = 0;
 
@@ -441,7 +225,13 @@ int ArchPX4IOSerial::_read_exact(uint8_t *buf, size_t len, const struct timespec
 			if (errno == EINTR) {
 				continue;
 			}
+			PX4_ERR("_read_exact poll failed: errno=%d (%s)", errno, strerror(errno));
+			return -EIO;
+		}
 
+		if (pr > 0 && (pfd.revents & (POLLERR | POLLHUP))) {
+			PX4_ERR("_read_exact revents error: 0x%x (POLLERR=%d, POLLHUP=%d)",
+				(unsigned)pfd.revents, !!(pfd.revents & POLLERR), !!(pfd.revents & POLLHUP));
 			return -EIO;
 		}
 
@@ -449,39 +239,82 @@ int ArchPX4IOSerial::_read_exact(uint8_t *buf, size_t len, const struct timespec
 			return -ETIMEDOUT;
 		}
 
-		ssize_t n = ::read(_fd, buf + got, len - got);
+		ssize_t n = ::read(_xfd, buf + got, len - got);
 
 		if (n > 0) {
 			got += n;
+			s_rx_total += n;
 			continue;
 		}
 
 		if (n < 0 && errno != EINTR && errno != EAGAIN) {
+			PX4_ERR("_read_exact read failed: errno=%d (%s)", errno, strerror(errno));
 			return -EIO;
 		}
-
-		/* n == 0 or transient error: loop and poll again until the deadline */
 	}
 
 	return OK;
 }
 
 /* ---- the transaction --------------------------------------------------- */
+int ArchPX4IOSerial::_acquire_fd(bool &is_temp)
+{
+	is_temp = false;
+	const pid_t me = getpid();
+
+	/* 1. If we already own the main fd, keep using it */
+	if (_fd >= 0 && _fd_owner == me) {
+		return _fd;
+	}
+
+	/* 2. If another active task (e.g. the work queue) owns the main fd,
+	 * use a temporary short-lived descriptor for this command (e.g. px4io status) */
+	if (_fd >= 0 && kill(_fd_owner, 0) == 0) {
+		int fd = ::open(PX4IO_SERIAL_DEVICE, O_RDWR | O_NOCTTY | O_NONBLOCK);
+
+		if (fd < 0) {
+			return -errno;
+		}
+
+		is_temp = true;
+		return fd;
+	}
+
+	/* 3. The old owner task exited (e.g. px4io start): become the new persistent owner */
+	_fd = -1;
+	int r = _open_port();
+	return (r == 0) ? _fd : r;
+}
 
 int ArchPX4IOSerial::_bus_exchange(IOPacket *_packet)
 {
-	_current_packet = _packet;
+	bool is_temp = false;
+	int fd = _acquire_fd(is_temp);
 
-	if (_fd < 0) {
-		return -EBADF;
+	if (fd < 0) {
+		return fd;
 	}
 
+	_xfd = fd;
+	int ret = _do_exchange(_packet);
+	_xfd = -1;
+
+	if (is_temp) {
+		::close(fd);
+	}
+
+	return ret;
+}
+
+int ArchPX4IOSerial::_do_exchange(IOPacket *_packet)
+{
 	perf_begin(_pc_txns);
 
 	/* drop anything left over from a previous failed exchange */
 	_drain_rx();
+	s_rx_total = 0;
 
-	/* absolute 10 ms deadline on the monotonic clock */
+	/* absolute deadline on the monotonic clock */
 	struct timespec deadline;
 	clock_gettime(CLOCK_MONOTONIC, &deadline);
 	int64_t dl_ns = timespec_to_ns(deadline) + PX4IO_EXCHANGE_TIMEOUT_NS;
@@ -489,18 +322,18 @@ int ArchPX4IOSerial::_bus_exchange(IOPacket *_packet)
 	deadline.tv_nsec = dl_ns % 1000000000LL;
 
 	/* transmit */
-	const size_t tx_len = PKT_SIZE(*_current_packet);
-	int ret = _write_all((const uint8_t *)_current_packet, tx_len, deadline);
+	const size_t tx_len = PKT_SIZE(*_packet);
+	int ret = _write_all((const uint8_t *)_packet, tx_len, deadline);
 
-	/* receive: 4 byte header first (crc, count_code, page, offset), then the registers */
+	/* receive: 4 byte header first, then the registers */
 	if (ret == OK) {
-		uint8_t *rx = (uint8_t *)_current_packet;
+		uint8_t *rx = (uint8_t *)_packet;
 		const size_t hdr = offsetof(IOPacket, regs);
 
 		ret = _read_exact(rx, hdr, deadline);
 
 		if (ret == OK) {
-			const unsigned count = PKT_COUNT(*_current_packet);
+			const unsigned count = PKT_COUNT(*_packet);
 
 			if (count > PKT_MAX_REGS) {
 				perf_count(_pc_badidle);
@@ -512,29 +345,34 @@ int ArchPX4IOSerial::_bus_exchange(IOPacket *_packet)
 		}
 	}
 
-	/* timeouts and I/O errors: not a completed transaction */
 	if (ret != OK) {
 		if (ret == -ETIMEDOUT) {
 			perf_count(_pc_timeouts);
-
 		} else {
 			perf_count(_pc_uerrs);
+		}
+
+		static unsigned dbg_n = 0;
+		if (dbg_n < 10) {
+			dbg_n++;
+			const uint8_t *b = (const uint8_t *)_packet;
+			PX4_WARN("xchg fail ret=%d tx_len=%u rx_bytes=%u buf=%02x %02x %02x %02x",
+				 ret, (unsigned)tx_len, (unsigned)s_rx_total, b[0], b[1], b[2], b[3]);
 		}
 
 		perf_cancel(_pc_txns);
 		return ret;
 	}
 
-	/* check packet CRC - a corrupt packet from IO means IO saw a CRC error */
-	uint8_t crc = _current_packet->crc;
-	_current_packet->crc = 0;
+	/* check packet CRC */
+	uint8_t crc = _packet->crc;
+	_packet->crc = 0;
 
-	if ((crc != crc_packet(_current_packet)) || (PKT_CODE(*_current_packet) == PKT_CODE_CORRUPT)) {
+	if ((crc != crc_packet(_packet)) || (PKT_CODE(*_packet) == PKT_CODE_CORRUPT)) {
 		perf_count(_pc_crcerrs);
 		ret = -EIO;
 	}
 
-	/* as upstream: a CRC failure still took real wire time, so it is recorded */
 	perf_end(_pc_txns);
 	return ret;
 }

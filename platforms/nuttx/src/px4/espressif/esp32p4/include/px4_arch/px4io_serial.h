@@ -31,105 +31,6 @@
 //  *
 //  ****************************************************************************/
 
-// /**
-//  * @file px4io_serial.h
-//  *
-//  * Serial interface for PX4IO on ESP32-P4 (NuttX POSIX UART).
-//  * No STM32/i.MXRT DMA — uses /dev/ttyS* read/write.
-//  */
-
-// #pragma once
-
-// #include <board_config.h>
-// #include <px4_platform_common/px4_config.h>
-// #include <px4_platform_common/micro_hal.h>
-// #include <perf/perf_counter.h>
-// #include <drivers/device/device.h>
-// #include <modules/px4iofirmware/protocol.h>
-// #include <px4_platform_common/sem.hpp>
-
-// /**
-//  * Common base used by src/drivers/px4io/px4io_serial.cpp
-//  */
-// class PX4IO_serial : public device::Device
-// {
-// public:
-// 	PX4IO_serial();
-// 	virtual ~PX4IO_serial();
-
-// 	virtual int init() = 0;
-
-// 	virtual int read(unsigned offset, void *data, unsigned count = 1) override;
-// 	virtual int write(unsigned address, void *data, unsigned count = 1) override;
-
-// protected:
-// 	/**
-// 	 * Base init — stores packet buffer and creates bus semaphore.
-// 	 */
-// 	int init(IOPacket *io_buffer);
-
-// 	/**
-// 	 * Arch must implement: send packet, wait for reply, return OK or -errno.
-// 	 */
-// 	virtual int _bus_exchange(IOPacket *_packet) = 0;
-
-// 	perf_counter_t _pc_txns;
-// 	perf_counter_t _pc_retries;
-// 	perf_counter_t _pc_timeouts;
-// 	perf_counter_t _pc_crcerrs;
-// 	perf_counter_t _pc_protoerrs;
-// 	perf_counter_t _pc_uerrs;
-// 	perf_counter_t _pc_idle;
-// 	perf_counter_t _pc_badidle;
-
-// private:
-// 	IOPacket *_io_buffer_ptr{nullptr};
-// 	px4_sem_t _bus_semaphore;
-
-// 	PX4IO_serial(const PX4IO_serial &) = delete;
-// 	PX4IO_serial &operator=(const PX4IO_serial &) = delete;
-// };
-
-// /**
-//  * ESP32-P4 implementation: NuttX serial device (POSIX).
-//  */
-// class ArchPX4IOSerial : public PX4IO_serial
-// {
-// public:
-// 	ArchPX4IOSerial();
-// 	ArchPX4IOSerial(const ArchPX4IOSerial &) = delete;
-// 	ArchPX4IOSerial &operator=(const ArchPX4IOSerial &) = delete;
-// 	~ArchPX4IOSerial() override;
-
-// 	int init() override;
-// 	int ioctl(unsigned operation, unsigned &arg) override;
-
-// protected:
-// 	int _bus_exchange(IOPacket *_packet) override;
-
-// private:
-// 	int _fd{-1};
-// 	IOPacket _io_buffer{};
-
-// 	/** Max time to wait for a full reply (ms). PX4IO is ~0.5 ms at 1.5 Mbps. */
-// 	static constexpr unsigned EXCHANGE_TIMEOUT_MS = 10;
-// };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
  * @file px4io_serial.h
  *
@@ -218,6 +119,12 @@ protected:
 private:
 	static constexpr size_t kBufAlign = 64;
 	static constexpr size_t kBufSize  = (sizeof(IOPacket) + kBufAlign - 1) & ~(kBufAlign - 1);
+
+	int	_open_port();
+	pid_t	_fd_owner{-1};
+	int	_acquire_fd(bool &is_temp);
+	int	_do_exchange(IOPacket *_packet);
+	int	_xfd{-1};		/* fd used by the exchange in progress */
 
 	/** discard any bytes waiting in the receive queue */
 	void	_drain_rx();

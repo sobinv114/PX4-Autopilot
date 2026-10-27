@@ -85,6 +85,8 @@ private:
 	perf_counter_t _comms_errors;
 	perf_counter_t _registers_invalid_reset;
 	perf_counter_t _registers_transfer_reset;
+	hrt_abstime _write_backoff_until{0};
+	uint8_t _write_fail_streak{0};
 
 	enum class STATE : uint8_t {
 		CONFIGURE,
@@ -108,6 +110,18 @@ private:
 
 	static constexpr uint8_t _transfer_fails_threshold = 10;
 	uint8_t _register_transfer_fails = 0;
+
+	uint8_t _fail_streak{0};
+	uint8_t _good_cycles{0};
+
+	uint32_t retryDelayUs()
+	{
+		_good_cycles = 0;
+
+		if (_fail_streak < 255) { _fail_streak++; }
+
+		return (_fail_streak > 5) ? 1'000'000 : 20'000;   // after 5 quick retries, retry once a second
+	}
 
 	void Run() override;
 	int registers_check();
@@ -153,9 +167,37 @@ int PCA9685Wrapper::init()
 	return PX4_OK;
 }
 
+// bool PCA9685Wrapper::updateOutputs(float outputs[MAX_ACTUATORS], unsigned num_outputs, unsigned num_control_groups_updated)
+// {
+// 	if (_state != STATE::RUNNING) { return false; }
+
+// 	uint16_t low_level_outputs[PCA9685_PWM_CHANNEL_COUNT] = {};
+// 	num_outputs = num_outputs > PCA9685_PWM_CHANNEL_COUNT ? PCA9685_PWM_CHANNEL_COUNT : num_outputs;
+
+// 	for (uint8_t i = 0; i < num_outputs; ++i) {
+// 		uint16_t output = static_cast<uint16_t>(lroundf(outputs[i]));
+
+// 		if (param_duty_mode & (1 << i)) {
+// 			low_level_outputs[i] = output;
+
+// 		} else {
+// 			low_level_outputs[i] = pca9685->calcRawFromPulse(output);
+// 		}
+// 	}
+
+// 	if (pca9685->updateRAW(low_level_outputs, num_outputs) != PX4_OK) {
+// 		perf_count(_comms_errors);
+// 		return false;
+// 	}
+
+// 	return true;
+// }
+
 bool PCA9685Wrapper::updateOutputs(float outputs[MAX_ACTUATORS], unsigned num_outputs, unsigned num_control_groups_updated)
 {
 	if (_state != STATE::RUNNING) { return false; }
+
+	if (hrt_absolute_time() < _write_backoff_until) { return false; }   // bus is failing, don't hammer it
 
 	uint16_t low_level_outputs[PCA9685_PWM_CHANNEL_COUNT] = {};
 	num_outputs = num_outputs > PCA9685_PWM_CHANNEL_COUNT ? PCA9685_PWM_CHANNEL_COUNT : num_outputs;
@@ -173,9 +215,16 @@ bool PCA9685Wrapper::updateOutputs(float outputs[MAX_ACTUATORS], unsigned num_ou
 
 	if (pca9685->updateRAW(low_level_outputs, num_outputs) != PX4_OK) {
 		perf_count(_comms_errors);
+
+		if (++_write_fail_streak >= 5) {
+			_write_backoff_until = hrt_absolute_time() + 1_s;   // pause writes for 1 second
+			_write_fail_streak = 0;
+		}
+
 		return false;
 	}
 
+	_write_fail_streak = 0;
 	return true;
 }
 
@@ -204,7 +253,8 @@ void PCA9685Wrapper::Run()
 
 			} else {
 				perf_count(_comms_errors);
-				ScheduleDelayed(20_ms);
+				// ScheduleDelayed(20_ms);
+				ScheduleDelayed(retryDelayUs());
 			}
 
 			break;
@@ -223,7 +273,8 @@ void PCA9685Wrapper::Run()
 			} else {
 				perf_count(_comms_errors);
 				_state = STATE::CONFIGURE;
-				ScheduleDelayed(20_ms);
+				// ScheduleDelayed(20_ms);
+				ScheduleDelayed(retryDelayUs());
 			}
 
 			break;
@@ -258,7 +309,8 @@ void PCA9685Wrapper::Run()
 					} else {
 						param_update_failed = true;
 						perf_count(_comms_errors);
-						ScheduleDelayed(20_ms);
+						// ScheduleDelayed(20_ms);
+						ScheduleDelayed(retryDelayUs());
 						break;
 					}
 				}
@@ -267,7 +319,14 @@ void PCA9685Wrapper::Run()
 			if (registers_check() != PX4_OK) {
 				_state = STATE::CONFIGURE;
 				ScheduleClear();
-				ScheduleDelayed(20_ms);
+				// ScheduleDelayed(20_ms);
+				ScheduleDelayed(retryDelayUs());
+
+			} else {
+				if (_good_cycles < 255) { _good_cycles++; }
+
+				if (_good_cycles >= 50) { _fail_streak = 0; }
+
 			}
 
 			_mixing_output.updateSubscriptions(false);

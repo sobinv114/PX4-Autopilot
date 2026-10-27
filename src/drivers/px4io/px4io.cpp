@@ -1456,7 +1456,7 @@ int PX4IO::checkcrc(int argc, char *argv[])
 		return 1;
 	}
 
-	const uint32_t app_size_max = 0xf000;
+	const uint32_t app_size_max = 0x1f000;   /* Change 0xf000 (60 KB) to 0x1f000 (124 KB) */
 	uint32_t fw_crc = 0;
 	uint32_t nbytes = 0;
 

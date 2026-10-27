@@ -120,6 +120,12 @@ PX4IO_Uploader::upload(const char *filenames[])
 	cfsetspeed(&t, 115200);
 	tcsetattr(_io_fd, TCSANOW, &t);
 
+
+	/* DEBUG: print the speed the driver reports after the change */
+	struct termios chk;
+	tcgetattr(_io_fd, &chk);
+	log("uart speed now = %u", (unsigned)cfgetispeed(&chk));
+
 	/* look for the bootloader for 150 ms */
 	for (int i = 0; i < 15; i++) {
 		ret = sync();

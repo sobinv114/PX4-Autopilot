@@ -24,28 +24,49 @@ param set-default MAV_TYPE 2
 #param set-default SENS_EXT_I2C_PRB 0
 #param set-default COM_ARM_SDCARD 0
 #disable CPU check. default is 90%
-param set-default PWM_MAIN_MIN1 0
-param set-default PWM_MAIN_MIN2 0
-param set-default PWM_MAIN_MIN3 0
-param set-default PWM_MAIN_MIN4 0
+# param set-default PWM_MAIN_MIN1 0
+# param set-default PWM_MAIN_MIN2 0
+# param set-default PWM_MAIN_MIN3 0
+# param set-default PWM_MAIN_MIN4 0
 
-param set-default PWM_MAIN_DIS1 0
-param set-default PWM_MAIN_DIS2 0
-param set-default PWM_MAIN_DIS3 0
-param set-default PWM_MAIN_DIS4 0
+# param set-default PWM_MAIN_DIS1 0
+# param set-default PWM_MAIN_DIS2 0
+# param set-default PWM_MAIN_DIS3 0
+# param set-default PWM_MAIN_DIS4 0
 
-param set-default DSHOT_CONFIG 600
+# param set-default DSHOT_CONFIG 600
 
-param set-default PWM_MAIN_FUNC1 101
-param set-default PWM_MAIN_FUNC2 103
-param set-default PWM_MAIN_FUNC3 102
-param set-default PWM_MAIN_FUNC4 104
-param set-default PWM_MAIN_MAX1 2100
-param set-default PWM_MAIN_MAX2 2100
-param set-default PWM_MAIN_MAX3 2100
-param set-default PWM_MAIN_MAX4 2100
-param set-default PWM_MAIN_TIM0 -1
-param set-default PWM_MAIN_TIM1 -1
+# param set-default PWM_MAIN_FUNC1 101
+# param set-default PWM_MAIN_FUNC2 103
+# param set-default PWM_MAIN_FUNC3 102
+# param set-default PWM_MAIN_FUNC4 104
+# param set-default PWM_MAIN_MAX1 2100
+# param set-default PWM_MAIN_MAX2 2100
+# param set-default PWM_MAIN_MAX3 2100
+# param set-default PWM_MAIN_MAX4 2100
+# param set-default PWM_MAIN_TIM0 -1
+# param set-default PWM_MAIN_TIM1 -1
+
+# --- PCA9685 16-channel PWM output ---
+param set-default PCA9685_EN_BUS 2       # rc.board_sensors starts the driver when > 0
+param set-default PCA9685_PWM_FREQ 50     # 50 Hz for normal servos
+
+param set-default PCA9685_FUNC1 201       # Servo 1
+param set-default PCA9685_FUNC2 202       # Servo 2
+param set-default PCA9685_FUNC3 203       # Servo 3
+param set-default PCA9685_FUNC4 204       # Servo 4
+param set-default PCA9685_FUNC5 205       # Servo 5
+param set-default PCA9685_FUNC6 206       # Servo 6
+param set-default PCA9685_FUNC7 207       # Servo 7
+param set-default PCA9685_FUNC8 208       # Servo 8
+param set-default PCA9685_FUNC9 301       # Peripheral via Actuator Set 1
+param set-default PCA9685_FUNC10 302      # Actuator Set 2
+param set-default PCA9685_FUNC11 303      # Actuator Set 3
+param set-default PCA9685_FUNC12 304      # Actuator Set 4
+param set-default PCA9685_FUNC13 305      # Actuator Set 5
+param set-default PCA9685_FUNC14 306      # Actuator Set 6
+param set-default PCA9685_FUNC15 400      # Landing Gear
+param set-default PCA9685_FUNC16 407      # RC AUX 1
 
 param set-default SYS_HAS_MAG 1
 param set-default SYS_HAS_BARO 0
