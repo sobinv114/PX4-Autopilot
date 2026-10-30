@@ -17,9 +17,9 @@ param set-default COM_ARM_SDCARD 0
 
 param set-default SYS_AUTOSTART 4001
 param set-default MAV_TYPE 2
-#param set-default EKF2_MULTI_IMU 0
-#param set-default SENS_IMU_MODE 1
-#param set-default EKF2_PREDICT_US 20000
+param set-default EKF2_MULTI_IMU 0
+param set-default SENS_IMU_MODE 1
+param set-default EKF2_PREDICT_US 20000
 #param set-default SYS_CTRL_ALLOC 1
 #param set-default SENS_EXT_I2C_PRB 0
 #param set-default COM_ARM_SDCARD 0
@@ -69,7 +69,7 @@ param set-default PCA9685_FUNC15 400      # Landing Gear
 param set-default PCA9685_FUNC16 407      # RC AUX 1
 
 param set-default SYS_HAS_MAG 1
-param set-default SYS_HAS_BARO 0
+param set-default SYS_HAS_BARO 1
 param set-default SENS_EN_AHT10 1
 param set-default ADC_ADS1115_EN 1
 
@@ -88,11 +88,11 @@ param set-default MAV_0_FLOW_CTRL 0    # 0 = off
 param set-default SER_TEL1_BAUD 921600
 
 # --- MAVLink instance 1 (what you enabled in QGC) ---
-param set-default MAV_1_CONFIG 102     # TEL2
-param set-default MAV_1_MODE 2         # 2 = Onboard
-param set-default MAV_1_RATE 0
-param set-default MAV_1_FLOW_CTRL 0
-param set-default SER_TEL2_BAUD 921600
+# param set-default MAV_1_CONFIG 102     # TEL2
+# param set-default MAV_1_MODE 2         # 2 = Onboard
+# param set-default MAV_1_RATE 0
+# param set-default MAV_1_FLOW_CTRL 0
+# param set-default SER_TEL2_BAUD 921600
 
 # param set-default MAV_2_CONFIG 103     # TEL3     LP_UART0 ttyS5
 # param set-default MAV_2_MODE 2         # 2 = Onboard

@@ -33,3 +33,5 @@
 
 # Take over the WS2812 strip: commander status + led_control
 neopixel start
+# Start MPU6500 after all system services and clocks have settled
+mpu6500 -s -b 2 start

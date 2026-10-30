@@ -18,29 +18,10 @@ set INA_CONFIGURED no
 # fi
 
 # ============================================
-# IMU
-# ============================================
-if ! icm42688p -s -R 2 start
-then
-	if ! icm42605 -s -R 2 start
-	then
-		if ! icm20602 -s -R 2 start
-		then
-			if ! icm42670p -s -R 2 start
-			then
-			        echo "No IMU detected"
-			fi
-		fi
-	fi
-fi
-
-# ============================================
 # Magnetometer
 # ============================================
 if param compare -s SYS_HAS_MAG 1
 then
-	# ist8310 start -I -a 12
-	# HMC5883L on internal I2C bus 1 (addr 0x1e)
 	hmc5883 start -I -b 1
 fi
 
@@ -49,7 +30,7 @@ fi
 # ============================================
 if param compare -s SYS_HAS_BARO 1
 then
-	spl06 -I -a 119 start
+	bmp180 start -I -b 1 -a 0x77
 fi
 
 # ============================================
@@ -68,11 +49,9 @@ then
 	tla2528 start -X
 fi
 
-
 # PCA9685 PWM Expander
 if param greater PCA9685_EN_BUS 1
 then
-	# pca9685_pwm_out start -X
 	pca9685_pwm_out start -I -b 2 -a 0x40
 fi
 
@@ -150,12 +129,6 @@ then
 	fi
 fi
 
-# ============================================
-# Other sensors
-# ============================================
-ip5109 start -X
-vl53l0x start -X
-
 
 
 # ASAIR AHT10 temperature/humidity sensor (internal I2C bus 1, addr 0x38)
@@ -165,4 +138,63 @@ then
 	aht10 start -I -b 1 -a 0x38
 fi
 
-#flow3953 start -d /dev/ttyS2
+
+# ============================================
+# IMU Initialization
+# ============================================
+
+# Give IMU hardware time to stabilize after power-on
+usleep 300000
+
+set IMU_FOUND no
+
+# 1. Try MPU6500
+if mpu6500 -s -b 2 start
+then
+	set IMU_FOUND yes
+fi
+
+# 2. Try ICM42688P
+if [ $IMU_FOUND = no ]
+then
+	if icm42688p -s -b 2 -R 2 start
+	then
+		set IMU_FOUND yes
+	fi
+fi
+
+# 3. Try ICM42605
+if [ $IMU_FOUND = no ]
+then
+	if icm42605 -s -b 2 -R 2 start
+	then
+		set IMU_FOUND yes
+	fi
+fi
+
+# 4. Try ICM20602
+if [ $IMU_FOUND = no ]
+then
+	if icm20602 -s -b 2 -R 2 start
+	then
+		set IMU_FOUND yes
+	fi
+fi
+
+# 5. Try ICM42670P
+if [ $IMU_FOUND = no ]
+then
+	if icm42670p -s -b 2 -R 2 start
+	then
+		set IMU_FOUND yes
+	fi
+fi
+
+# Final status check
+if [ $IMU_FOUND = no ]
+then
+	echo "ERROR: No IMU detected on SPI bus!"
+else
+	echo "IMU successfully started"
+fi
+

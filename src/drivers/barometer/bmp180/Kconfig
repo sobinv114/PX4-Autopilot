@@ -1,0 +1,5 @@
+menuconfig DRIVERS_BAROMETER_BMP180
+	bool "bmp180"
+	default n
+	---help---
+		Enable support for the Bosch BMP180 barometer (I2C)

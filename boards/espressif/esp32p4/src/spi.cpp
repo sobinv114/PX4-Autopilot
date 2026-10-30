@@ -37,13 +37,14 @@
  * ESP32-P4 Board SPI Bus and Sensor Device Configuration
  */
 
+#include "nuttx/config.h"
 #include <board_config.h>
 #include <px4_arch/spi_hw_description.h>
 #include <drivers/drv_sensor.h>
 #include <nuttx/spi/spi.h>
 
 #ifndef SPI_BUS_MAX_BUS_ITEMS
-#  define SPI_BUS_MAX_BUS_ITEMS 4
+#  define SPI_BUS_MAX_BUS_ITEMS 8
 #endif
 
 constexpr px4_spi_bus_t px4_spi_buses[SPI_BUS_MAX_BUS_ITEMS] = {
@@ -51,16 +52,21 @@ constexpr px4_spi_bus_t px4_spi_buses[SPI_BUS_MAX_BUS_ITEMS] = {
 #if defined(CONFIG_ESPRESSIF_SPI2)
 	/*
 	 * SPI 2: Primary internal sensor bus
+	 */
+	/*
+	 * SPI 2: Primary internal sensor bus
 	 * Pins: CLK=GPIO 30, MOSI=GPIO 29, MISO=GPIO 31, CS=GPIO 28
 	 *
 	 * PX4 will probe these IMU types on boot and attach to the one detected.
 	 */
 	initSPIBus(SPI::Bus::SPI2, {
+		/* Add MPU6500 / MPU6000 */
+		initSPIDevice(DRV_IMU_DEVTYPE_MPU6000,   SPI::CS{GPIO_SPI2_CS}, SPI::DRDY{-1}),
+		initSPIDevice(DRV_IMU_DEVTYPE_MPU6500,   SPI::CS{GPIO_SPI2_CS}, SPI::DRDY{-1}),
 		initSPIDevice(DRV_IMU_DEVTYPE_ICM42688P, SPI::CS{GPIO_SPI2_CS}, SPI::DRDY{-1}),
 		initSPIDevice(DRV_IMU_DEVTYPE_ICM42670P, SPI::CS{GPIO_SPI2_CS}, SPI::DRDY{-1}),
 		initSPIDevice(DRV_IMU_DEVTYPE_ICM20602,  SPI::CS{GPIO_SPI2_CS}, SPI::DRDY{-1}),
 		initSPIDevice(DRV_IMU_DEVTYPE_ICM42605,  SPI::CS{GPIO_SPI2_CS}, SPI::DRDY{-1}),
-		initSPIDevice(DRV_BARO_DEVTYPE_BMP388,   SPI::CS{GPIO_SPI2_CS}, SPI::DRDY{-1}),
 	}),
 #endif
 

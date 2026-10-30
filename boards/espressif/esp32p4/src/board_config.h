@@ -118,10 +118,15 @@
 /* ========================================================================= */
 
 /* SPI2 (Bus 2) */
-#define GPIO_SPI2_CS                    28
-#define GPIO_SPI2_MOSI                  29
-#define GPIO_SPI2_CLK                   30
-#define GPIO_SPI2_MISO                  31
+#define GPIO_SPI2_CS                    CONFIG_ESPRESSIF_SPI2_CSPIN
+#define GPIO_SPI2_CLK                   CONFIG_ESPRESSIF_SPI2_CLKPIN
+#define GPIO_SPI2_MOSI                  CONFIG_ESPRESSIF_SPI2_MOSIPIN
+#define GPIO_SPI2_MISO                  CONFIG_ESPRESSIF_SPI2_MISOPIN
+
+// CONFIG_ESPRESSIF_SPI2_CSPIN=31
+// CONFIG_ESPRESSIF_SPI2_CLKPIN=30
+// CONFIG_ESPRESSIF_SPI2_MOSIPIN=29
+// CONFIG_ESPRESSIF_SPI2_MISOPIN=28
 
 /* SPI3 (Bus 3) */
 #define GPIO_SPI3_CS                    20
@@ -129,7 +134,7 @@
 #define GPIO_SPI3_CLK                   26
 #define GPIO_SPI3_MISO                  27
 
-#define BOARD_SPI_BUS_MAX_BUS_ITEMS     4
+#define BOARD_SPI_BUS_MAX_BUS_ITEMS     8
 
 /* ========================================================================= */
 /* Status LEDs                                                               */

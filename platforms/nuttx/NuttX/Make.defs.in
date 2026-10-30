@@ -98,7 +98,10 @@ endif
 
 ARCHTYPE = rv32imac_zicsr_zifencei
 ARCHABITYPE = ilp32
-ARCHCPUFLAGS = -march=$(ARCHTYPE) -mabi=$(ARCHABITYPE) -fno-jump-tables -fno-tree-switch-conversion
+# ARCHCPUFLAGS = -march=$(ARCHTYPE) -mabi=$(ARCHABITYPE) -fno-jump-tables -fno-tree-switch-conversion
+ARCHCPUFLAGS = -march=rv32imafc_zicsr_zifencei -mabi=ilp32f -fsingle-precision-constant -fno-jump-tables -fno-tree-switch-conversion -mno-relax -msmall-data-limit=0
+# ARCHCPUFLAGS = -march=rv32imafc_zicsr_zifencei -mabi=ilp32f -fno-jump-tables -fno-tree-switch-conversion -mno-relax -msmall-data-limit=0
+
 ARCHCFLAGS += $(ARCHCPUFLAGS) -fno-common -fno-strict-aliasing -fomit-frame-pointer -ffunction-sections -fdata-sections
 ARCHCXXFLAGS += $(ARCHCPUFLAGS) -fno-common -fno-strict-aliasing -fomit-frame-pointer -ffunction-sections -fdata-sections
 ARCHOPTIMIZATION = -Os
@@ -154,7 +157,9 @@ FLAGS = $(MAXOPTIMIZATION) -g2 \
 	-Wno-sign-compare \
 	-Wno-type-limits \
 	-Wno-unused-parameter \
-	-Wpointer-arith
+	-Wno-pointer-arith \
+	-Wno-enum-conversion \
+	-Wno-cast-function-type
 
 FLAGS += $(EXTRAFLAGS)
 
@@ -191,6 +196,9 @@ CFLAGS = $(ARCHINCLUDES) \
 	-Wno-old-style-declaration \
 	-Wno-sign-compare \
 	-Wno-type-limits \
+	-Wno-discarded-qualifiers \
+	-Wno-comment \
+	-Wno-attributes \
 	${CMAKE_C_COMP_DEP_FLAGS}
 
 CXXFLAGS = $(ARCHXXINCLUDES) \
