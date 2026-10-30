@@ -204,34 +204,6 @@ int PCA9685::probe()
 	return PX4_ERROR;
 }
 
-// int PCA9685::writePWM(uint8_t idx, const uint16_t *value, uint8_t num)
-// {
-// 	uint8_t buf[PCA9685_PWM_CHANNEL_COUNT * PCA9685_REG_LED_INCREMENT + 1] = {};
-// 	buf[0] = PCA9685_REG_LED0 + PCA9685_REG_LED_INCREMENT * idx;
-
-// 	for (int i = 0; i < num; ++i) {
-// 		buf[1 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
-
-// 		if (value[i] == 0) {
-// 			buf[2 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
-// 			buf[3 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
-// 			buf[4 + i * PCA9685_REG_LED_INCREMENT] = PCA9685_LED_ON_FULL_ON_OFF_MASK;
-
-// 		} else if (value[i] == 4096) {
-// 			buf[2 + i * PCA9685_REG_LED_INCREMENT] = PCA9685_LED_ON_FULL_ON_OFF_MASK;
-// 			buf[3 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
-// 			buf[4 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
-
-// 		} else {
-// 			buf[2 + i * PCA9685_REG_LED_INCREMENT] = 0x00;
-// 			buf[3 + i * PCA9685_REG_LED_INCREMENT] = (uint8_t)(value[i] & 0xFF);
-// 			buf[4 + i * PCA9685_REG_LED_INCREMENT] = (uint8_t)(value[i] >> 8);
-// 		}
-// 	}
-
-// 	return transfer(buf, num * PCA9685_REG_LED_INCREMENT + 1, nullptr, 0);
-// }
-
 
 int PCA9685::writePWM(uint8_t idx, const uint16_t *value, uint8_t num)
 {

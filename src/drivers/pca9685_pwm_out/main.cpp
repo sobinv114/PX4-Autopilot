@@ -167,31 +167,6 @@ int PCA9685Wrapper::init()
 	return PX4_OK;
 }
 
-// bool PCA9685Wrapper::updateOutputs(float outputs[MAX_ACTUATORS], unsigned num_outputs, unsigned num_control_groups_updated)
-// {
-// 	if (_state != STATE::RUNNING) { return false; }
-
-// 	uint16_t low_level_outputs[PCA9685_PWM_CHANNEL_COUNT] = {};
-// 	num_outputs = num_outputs > PCA9685_PWM_CHANNEL_COUNT ? PCA9685_PWM_CHANNEL_COUNT : num_outputs;
-
-// 	for (uint8_t i = 0; i < num_outputs; ++i) {
-// 		uint16_t output = static_cast<uint16_t>(lroundf(outputs[i]));
-
-// 		if (param_duty_mode & (1 << i)) {
-// 			low_level_outputs[i] = output;
-
-// 		} else {
-// 			low_level_outputs[i] = pca9685->calcRawFromPulse(output);
-// 		}
-// 	}
-
-// 	if (pca9685->updateRAW(low_level_outputs, num_outputs) != PX4_OK) {
-// 		perf_count(_comms_errors);
-// 		return false;
-// 	}
-
-// 	return true;
-// }
 
 bool PCA9685Wrapper::updateOutputs(float outputs[MAX_ACTUATORS], unsigned num_outputs, unsigned num_control_groups_updated)
 {
@@ -388,7 +363,7 @@ $ pca9685_pwm_out start -X -a 0x40 -b 1
     PRINT_MODULE_USAGE_NAME("pca9685_pwm_out", "driver");
     PRINT_MODULE_USAGE_COMMAND_DESCR("start", "Start the task");
     PRINT_MODULE_USAGE_PARAM_STRING('a',"0x40","<addr>","7-bits I2C address of PCA9685",true);
-	PRINT_MODULE_USAGE_PARAM_INT('b',1,0,255,"bus that pca9685 is connected to",true);
+    PRINT_MODULE_USAGE_PARAM_INT('b',1,0,255,"bus that pca9685 is connected to",true);
     PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 
     return 0;
