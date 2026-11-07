@@ -1,0 +1,5 @@
+menuconfig DRIVERS_IMU_BOSCH_BMI323
+	bool "bosch bmi323"
+	default n
+	---help---
+		Enable support for bosch bmi323

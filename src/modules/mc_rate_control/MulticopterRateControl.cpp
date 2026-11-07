@@ -133,8 +133,11 @@ MulticopterRateControl::Run()
 		const hrt_abstime now = angular_velocity.timestamp_sample;
 
 		// Guard against too small (< 0.125ms) and too large (> 20ms) dt's.
-		const float dt = math::constrain(((now - _last_run) * 1e-6f), 0.000125f, 0.02f);
+		// const float dt = math::constrain(((now - _last_run) * 1e-6f), 0.000125f, 0.02f);
+		// _last_run = now;
+		const float dt = math::constrain(((float)(uint32_t)(now - _last_run) * 1e-6f), 0.000125f, 0.02f);
 		_last_run = now;
+
 
 		const Vector3f rates{angular_velocity.xyz};
 		const Vector3f angular_accel{angular_velocity.xyz_derivative};

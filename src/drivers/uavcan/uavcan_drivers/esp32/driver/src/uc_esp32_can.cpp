@@ -108,36 +108,73 @@ int16_t CanIface::receive(uavcan::CanFrame& out_frame, uavcan::MonotonicTime& ou
 	return 1;
 }
 
+// int CanDriver::init(uint8_t num_ifaces, uint32_t bitrate)
+// {
+// 	(void)bitrate;
+// 	PX4_INFO("UAVCAN: CanDriver::init called with %u ifaces", num_ifaces);
+
+// 	num_ifaces_ = (num_ifaces > 2) ? 2 : num_ifaces;
+// 	if (num_ifaces_ == 0) {
+// 		num_ifaces_ = 1;
+// 	}
+
+// 	if (num_ifaces_ >= 1) {
+// 		int ret0 = iface0_.init("/dev/can0");
+// 		if (ret0 < 0) {
+// 			PX4_ERR("UAVCAN: Failed to open /dev/can0 (%d)", ret0);
+// 			return -1;
+// 		}
+// 		PX4_INFO("UAVCAN: /dev/can0 opened successfully (fd=%d)", iface0_.getFd());
+// 	}
+
+// 	if (num_ifaces_ >= 2) {
+// 		int ret1 = iface1_.init("/dev/can1");
+// 		if (ret1 < 0) {
+// 			PX4_ERR("UAVCAN: Failed to open /dev/can1 (%d)", ret1);
+// 			return -1;
+// 		}
+// 		PX4_INFO("UAVCAN: /dev/can1 opened successfully (fd=%d)", iface1_.getFd());
+// 	}
+
+// 	return 0;
+// }
+
 int CanDriver::init(uint8_t num_ifaces, uint32_t bitrate)
 {
 	(void)bitrate;
 	PX4_INFO("UAVCAN: CanDriver::init called with %u ifaces", num_ifaces);
 
-	num_ifaces_ = (num_ifaces > 2) ? 2 : num_ifaces;
+	uint8_t successful_ifaces = 0;
+
+	// Try initializing iface0 (/dev/can0)
+    int ret0 = iface0_.init("/dev/can0");
+    if (ret0 >= 0) {
+        successful_ifaces++;
+        PX4_INFO("UAVCAN: /dev/can0 opened successfully (fd=%d)", iface0_.getFd());
+    } else {
+        PX4_ERR("UAVCAN: Failed to open /dev/can0 (%d)", ret0);
+    }
+
+	// Try initializing iface1 (/dev/can1) only if requested and present
+    if (num_ifaces > 1) {
+        int ret1 = iface1_.init("/dev/can1");
+        if (ret1 >= 0) {
+            successful_ifaces++;
+            PX4_INFO("UAVCAN: /dev/can1 opened successfully (fd=%d)", iface1_.getFd());
+        } else {
+            PX4_WARN("UAVCAN: /dev/can1 not available, continuing with single interface.");
+        }
+    }
+
+	num_ifaces_ = successful_ifaces;
 	if (num_ifaces_ == 0) {
-		num_ifaces_ = 1;
-	}
-
-	if (num_ifaces_ >= 1) {
-		int ret0 = iface0_.init("/dev/can0");
-		if (ret0 < 0) {
-			PX4_ERR("UAVCAN: Failed to open /dev/can0 (%d)", ret0);
-			return -1;
-		}
-		PX4_INFO("UAVCAN: /dev/can0 opened successfully (fd=%d)", iface0_.getFd());
-	}
-
-	if (num_ifaces_ >= 2) {
-		int ret1 = iface1_.init("/dev/can1");
-		if (ret1 < 0) {
-			PX4_ERR("UAVCAN: Failed to open /dev/can1 (%d)", ret1);
-			return -1;
-		}
-		PX4_INFO("UAVCAN: /dev/can1 opened successfully (fd=%d)", iface1_.getFd());
+		PX4_ERR("UAVCAN: Error - No CAN interfaces could be initialized!");
+		return -1;
 	}
 
 	return 0;
 }
+
 
 int16_t CanDriver::select(uavcan::CanSelectMasks& inout_masks,
                           const uavcan::CanFrame* (&pending_tx)[uavcan::MaxCanIfaces],

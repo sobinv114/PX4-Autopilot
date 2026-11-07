@@ -91,25 +91,51 @@ Vector3f LatLonAlt::computeAngularRateNavFrame(const Vector3f &v_ned) const
 		       -v_ned(1) * tanf(_latitude_rad) / (static_cast<float>(r_e) + _altitude));
 }
 
+// Vector2d LatLonAlt::deltaLatLonToDeltaXY(const double latitude, const float altitude)
+// {
+// 	double r_n;
+// 	double r_e;
+// 	computeRadiiOfCurvature(latitude, r_n, r_e);
+// 	const double dn_dlat = r_n + static_cast<double>(altitude);
+// 	const double de_dlon = (r_e + static_cast<double>(altitude)) * cos(latitude);
+
+// 	return Vector2d(dn_dlat, de_dlon);
+// }
+
 Vector2d LatLonAlt::deltaLatLonToDeltaXY(const double latitude, const float altitude)
 {
 	double r_n;
 	double r_e;
 	computeRadiiOfCurvature(latitude, r_n, r_e);
 	const double dn_dlat = r_n + static_cast<double>(altitude);
-	const double de_dlon = (r_e + static_cast<double>(altitude)) * cos(latitude);
+	const double de_dlon = (r_e + static_cast<double>(altitude)) * static_cast<double>(cosf(static_cast<float>(latitude)));
 
 	return Vector2d(dn_dlat, de_dlon);
 }
 
+// void LatLonAlt::computeRadiiOfCurvature(const double latitude, double &meridian_radius_of_curvature,
+// 					double &transverse_radius_of_curvature)
+// {
+// 	const double tmp = 1.0 - pow(Wgs84::eccentricity * sin(latitude), 2);
+// 	const double sqrt_tmp = std::sqrt(tmp);
+// 	meridian_radius_of_curvature = Wgs84::meridian_radius_of_curvature_numerator / (tmp * sqrt_tmp);
+// 	transverse_radius_of_curvature = Wgs84::equatorial_radius / sqrt_tmp;
+// }
+
+
 void LatLonAlt::computeRadiiOfCurvature(const double latitude, double &meridian_radius_of_curvature,
 					double &transverse_radius_of_curvature)
 {
-	const double tmp = 1.0 - pow(Wgs84::eccentricity * sin(latitude), 2);
-	const double sqrt_tmp = std::sqrt(tmp);
-	meridian_radius_of_curvature = Wgs84::meridian_radius_of_curvature_numerator / (tmp * sqrt_tmp);
-	transverse_radius_of_curvature = Wgs84::equatorial_radius / sqrt_tmp;
+	const float lat_f = static_cast<float>(latitude);
+	const float sin_lat = sinf(lat_f);
+	const float e_sin = static_cast<float>(Wgs84::eccentricity) * sin_lat;
+	const float tmp = 1.0f - (e_sin * e_sin);
+	const float sqrt_tmp = sqrtf(tmp);
+
+	meridian_radius_of_curvature = static_cast<double>(static_cast<float>(Wgs84::meridian_radius_of_curvature_numerator) / (tmp * sqrt_tmp));
+	transverse_radius_of_curvature = static_cast<double>(static_cast<float>(Wgs84::equatorial_radius) / sqrt_tmp);
 }
+
 
 matrix::Dcmf LatLonAlt::computeRotEcefToNed() const
 {
@@ -126,11 +152,15 @@ matrix::Dcmf LatLonAlt::computeRotEcefToNed() const
 	return matrix::Dcmf(val);
 }
 
+
 LatLonAlt LatLonAlt::operator+(const matrix::Vector3f &delta_pos) const
 {
 	const matrix::Vector2d d_lat_lon_to_d_xy = deltaLatLonToDeltaXY(latitude_rad(), altitude());
-	const double latitude_rad = matrix::wrap_pi(_latitude_rad + static_cast<double>(delta_pos(0)) / d_lat_lon_to_d_xy(0));
-	const double longitude_rad = matrix::wrap_pi(_longitude_rad + static_cast<double>(delta_pos(1)) / d_lat_lon_to_d_xy(1));
+	const double d_lat = static_cast<double>(delta_pos(0) / static_cast<float>(d_lat_lon_to_d_xy(0)));
+	const double d_lon = static_cast<double>(delta_pos(1) / static_cast<float>(d_lat_lon_to_d_xy(1)));
+
+	const double latitude_rad = matrix::wrap_pi(_latitude_rad + d_lat);
+	const double longitude_rad = matrix::wrap_pi(_longitude_rad + d_lon);
 	const float altitude = _altitude - delta_pos(2);
 
 	LatLonAlt lla_new;
@@ -142,26 +172,72 @@ LatLonAlt LatLonAlt::operator+(const matrix::Vector3f &delta_pos) const
 void LatLonAlt::operator+=(const matrix::Vector3f &delta_pos)
 {
 	matrix::Vector2d d_lat_lon_to_d_xy = deltaLatLonToDeltaXY(_latitude_rad, _altitude);
-	_latitude_rad = matrix::wrap_pi(_latitude_rad + static_cast<double>(delta_pos(0)) / d_lat_lon_to_d_xy(0));
-	_longitude_rad = matrix::wrap_pi(_longitude_rad + static_cast<double>(delta_pos(1)) / d_lat_lon_to_d_xy(1));
+	const double d_lat = static_cast<double>(delta_pos(0) / static_cast<float>(d_lat_lon_to_d_xy(0)));
+	const double d_lon = static_cast<double>(delta_pos(1) / static_cast<float>(d_lat_lon_to_d_xy(1)));
+
+	_latitude_rad = matrix::wrap_pi(_latitude_rad + d_lat);
+	_longitude_rad = matrix::wrap_pi(_longitude_rad + d_lon);
 	_altitude -= delta_pos(2);
 }
 
 void LatLonAlt::operator+=(const matrix::Vector2f &delta_pos)
 {
 	matrix::Vector2d d_lat_lon_to_d_xy = deltaLatLonToDeltaXY(_latitude_rad, _altitude);
-	_latitude_rad = matrix::wrap_pi(_latitude_rad + static_cast<double>(delta_pos(0)) / d_lat_lon_to_d_xy(0));
-	_longitude_rad = matrix::wrap_pi(_longitude_rad + static_cast<double>(delta_pos(1)) / d_lat_lon_to_d_xy(1));
+	const double d_lat = static_cast<double>(delta_pos(0) / static_cast<float>(d_lat_lon_to_d_xy(0)));
+	const double d_lon = static_cast<double>(delta_pos(1) / static_cast<float>(d_lat_lon_to_d_xy(1)));
+
+	_latitude_rad = matrix::wrap_pi(_latitude_rad + d_lat);
+	_longitude_rad = matrix::wrap_pi(_longitude_rad + d_lon);
 }
 
 matrix::Vector3f LatLonAlt::operator-(const LatLonAlt &lla) const
 {
-	const double delta_lat = matrix::wrap_pi(_latitude_rad - lla.latitude_rad());
-	const double delta_lon = matrix::wrap_pi(_longitude_rad - lla.longitude_rad());
+	const float delta_lat = static_cast<float>(matrix::wrap_pi(_latitude_rad - lla.latitude_rad()));
+	const float delta_lon = static_cast<float>(matrix::wrap_pi(_longitude_rad - lla.longitude_rad()));
 	const float delta_alt = _altitude - lla.altitude();
 
 	const matrix::Vector2d d_lat_lon_to_d_xy = deltaLatLonToDeltaXY(_latitude_rad, _altitude);
-	return matrix::Vector3f(static_cast<float>(delta_lat * d_lat_lon_to_d_xy(0)),
-				static_cast<float>(delta_lon * d_lat_lon_to_d_xy(1)),
+	return matrix::Vector3f(delta_lat * static_cast<float>(d_lat_lon_to_d_xy(0)),
+				delta_lon * static_cast<float>(d_lat_lon_to_d_xy(1)),
 				-delta_alt);
 }
+
+// LatLonAlt LatLonAlt::operator+(const matrix::Vector3f &delta_pos) const
+// {
+// 	const matrix::Vector2d d_lat_lon_to_d_xy = deltaLatLonToDeltaXY(latitude_rad(), altitude());
+// 	const double latitude_rad = matrix::wrap_pi(_latitude_rad + static_cast<double>(delta_pos(0)) / d_lat_lon_to_d_xy(0));
+// 	const double longitude_rad = matrix::wrap_pi(_longitude_rad + static_cast<double>(delta_pos(1)) / d_lat_lon_to_d_xy(1));
+// 	const float altitude = _altitude - delta_pos(2);
+
+// 	LatLonAlt lla_new;
+// 	lla_new.setLatLonRad(latitude_rad, longitude_rad);
+// 	lla_new.setAltitude(altitude);
+// 	return lla_new;
+// }
+
+// void LatLonAlt::operator+=(const matrix::Vector3f &delta_pos)
+// {
+// 	matrix::Vector2d d_lat_lon_to_d_xy = deltaLatLonToDeltaXY(_latitude_rad, _altitude);
+// 	_latitude_rad = matrix::wrap_pi(_latitude_rad + static_cast<double>(delta_pos(0)) / d_lat_lon_to_d_xy(0));
+// 	_longitude_rad = matrix::wrap_pi(_longitude_rad + static_cast<double>(delta_pos(1)) / d_lat_lon_to_d_xy(1));
+// 	_altitude -= delta_pos(2);
+// }
+
+// void LatLonAlt::operator+=(const matrix::Vector2f &delta_pos)
+// {
+// 	matrix::Vector2d d_lat_lon_to_d_xy = deltaLatLonToDeltaXY(_latitude_rad, _altitude);
+// 	_latitude_rad = matrix::wrap_pi(_latitude_rad + static_cast<double>(delta_pos(0)) / d_lat_lon_to_d_xy(0));
+// 	_longitude_rad = matrix::wrap_pi(_longitude_rad + static_cast<double>(delta_pos(1)) / d_lat_lon_to_d_xy(1));
+// }
+
+// matrix::Vector3f LatLonAlt::operator-(const LatLonAlt &lla) const
+// {
+// 	const double delta_lat = matrix::wrap_pi(_latitude_rad - lla.latitude_rad());
+// 	const double delta_lon = matrix::wrap_pi(_longitude_rad - lla.longitude_rad());
+// 	const float delta_alt = _altitude - lla.altitude();
+
+// 	const matrix::Vector2d d_lat_lon_to_d_xy = deltaLatLonToDeltaXY(_latitude_rad, _altitude);
+// 	return matrix::Vector3f(static_cast<float>(delta_lat * d_lat_lon_to_d_xy(0)),
+// 				static_cast<float>(delta_lon * d_lat_lon_to_d_xy(1)),
+// 				-delta_alt);
+// }

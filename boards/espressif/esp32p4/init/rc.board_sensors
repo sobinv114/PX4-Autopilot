@@ -149,7 +149,7 @@ usleep 300000
 set IMU_FOUND no
 
 # 1. Try MPU6500
-if mpu6500 -s -b 2 start
+if mpu6500 -s -b 2 -f 4000000 start
 then
 	set IMU_FOUND yes
 fi
@@ -185,6 +185,15 @@ fi
 if [ $IMU_FOUND = no ]
 then
 	if icm42670p -s -b 2 -R 2 start
+	then
+		set IMU_FOUND yes
+	fi
+fi
+
+# 6. Try BMI323
+if [ $IMU_FOUND = no ]
+then
+	if bmi323 -s -b 2 -R 2 start
 	then
 		set IMU_FOUND yes
 	fi

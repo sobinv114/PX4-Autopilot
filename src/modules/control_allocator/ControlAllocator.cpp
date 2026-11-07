@@ -369,8 +369,12 @@ ControlAllocator::Run()
 	}
 
 	// Guard against too small (< 0.2ms) and too large (> 20ms) dt's.
+	// const hrt_abstime now = hrt_absolute_time();
+	// const float dt = math::constrain(((now - _last_run) / 1e6f), 0.0002f, 0.02f);
+
+	// Guard against too small (< 0.2ms) and too large (> 20ms) dt's.
 	const hrt_abstime now = hrt_absolute_time();
-	const float dt = math::constrain(((now - _last_run) / 1e6f), 0.0002f, 0.02f);
+	const float dt = math::constrain(((float)(uint32_t)(now - _last_run) * 1e-6f), 0.0002f, 0.02f);
 
 	_actuator_group_preflight_check.handleCommand(now, _effectiveness_source_id == EffectivenessSource::TILTROTOR_VTOL);
 	_actuator_group_preflight_check.updateState(now);
@@ -734,7 +738,8 @@ ControlAllocator::get_ice_shedding_output(hrt_abstime now)
 
 	} else {
 		// Square wave output
-		const float elapsed_in_period = fmodf(static_cast<float>(now) * 1e-6f, period_sec);
+		// const float elapsed_in_period = fmodf(static_cast<float>(now) * 1e-6f, period_sec);
+		const float elapsed_in_period = fmodf((float)(uint32_t)now * 1e-6f, period_sec);
 		const float ice_shedding_output = elapsed_in_period < ICE_SHEDDING_ON_SEC ? ICE_SHEDDING_OUTPUT : 0.0f;
 
 		return ice_shedding_output;

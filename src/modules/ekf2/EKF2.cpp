@@ -1944,6 +1944,13 @@ void EKF2::PublishStates(const hrt_abstime &timestamp)
 
 void EKF2::PublishStatus(const hrt_abstime &timestamp)
 {
+	// throttle to 50 Hz /////////////////////////////////////////
+	if (timestamp < _last_status_publish_us + 20_ms) {
+		return;
+	}
+        /////////////////////////////////////////
+	_last_status_publish_us = timestamp;
+
 	estimator_status_s status{};
 	status.timestamp_sample = _ekf.time_delayed_us();
 
@@ -2029,6 +2036,15 @@ void EKF2::PublishFusionControl(const hrt_abstime &timestamp)
 	if (_replay_mode) {
 		return;
 	}
+
+	////////////////////////////////////////////////////////////////////////////
+	// throttle to 10 Hz, this topic is only used for logging
+	if (timestamp < _last_fusion_control_publish + 100_ms) {
+		return;
+	}
+	////////////////////////////////////////////////////////////////////////////
+
+	_last_fusion_control_publish = timestamp;
 
 	estimator_fusion_control_s msg{};
 	msg.gps_intended[0] = _fc.gps.intended();

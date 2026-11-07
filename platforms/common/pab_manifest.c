@@ -75,6 +75,55 @@ static const px4_hw_mft_item_t device_unsupported = {0, 0, 0};
 // The ids of those components is given by the enum (px4_hw_mft_item_id_t)
 // declared in board_common.h
 
+
+// =========================================================================
+// BASE ID FOR ESP32-P4
+// =========================================================================
+static const px4_hw_mft_item_t base_configuration_esp32p4[] = {
+	{
+		.id          = PX4_MFT_PX4IO,
+		.present     = 1,   // PX4IO IS ON
+		.mandatory   = 1,   // Must be present
+		.connection  = px4_hw_con_onboard,
+	},
+	{
+		.id          = PX4_MFT_USB,
+		.present     = 1,
+		.mandatory   = 1,
+		.connection  = px4_hw_con_onboard,
+	},
+	{
+		.id          = PX4_MFT_CAN2,
+		.present     = 0,
+		.mandatory   = 0,
+		.connection  = px4_hw_con_unknown,
+	},
+	{
+		.id          = PX4_MFT_CAN3,
+		.present     = 0,
+		.mandatory   = 0,
+		.connection  = px4_hw_con_unknown,
+	},
+	{
+		.id          = PX4_MFT_PM2,
+		.present     = 0,
+		.mandatory   = 0,
+		.connection  = px4_hw_con_unknown,
+	},
+	{
+		.id          = PX4_MFT_ETHERNET,
+		.present     = 1,   // ESP32-P4 EMAC if used
+		.mandatory   = 0,
+		.connection  = px4_hw_con_connector,
+	},
+	{
+		.id          = PX4_MFT_T100_ETH,
+		.present     = 0,
+		.mandatory   = 0,
+		.connection  = px4_hw_con_unknown,
+	},
+};
+
 // BASE ID 0 Auterion vXx base board
 static const px4_hw_mft_item_t base_configuration_0[] = {
 	{
@@ -519,6 +568,8 @@ static px4_hw_mft_list_entry_t mft_lists[] = {
 	{HW_BASE_ID(0x100),  base_configuration_0, arraySize(base_configuration_0)},   // Holybro Pixhawk Jetson Baseboard ver 0x100 Alaised to ID 0
 	{HW_BASE_ID(0x150),  base_configuration_0, arraySize(base_configuration_0)},   // ZeroOne Pixhawk Baseboard ver 0x150
 	{HW_BASE_ID(0x200),  base_configuration_0, arraySize(base_configuration_0)},   // AmovLab Pixhawk Baseboard ver 0x150
+	{HW_BASE_ID(0x300),  base_configuration_esp32p4, arraySize(base_configuration_esp32p4)}, // ESP32-P4 Custom Base
+
 };
 
 /************************************************************************************

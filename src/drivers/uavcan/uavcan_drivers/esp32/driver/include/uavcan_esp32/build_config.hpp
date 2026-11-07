@@ -7,7 +7,7 @@
 #endif
 
 #ifndef UAVCAN_ESP32_NUM_IFACES
-# define UAVCAN_ESP32_NUM_IFACES 2
+# define UAVCAN_ESP32_NUM_IFACES 1
 #endif
 
 #define UAVCAN_ESP32_TIMER_NUMBER 1

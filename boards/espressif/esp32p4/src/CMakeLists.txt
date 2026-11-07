@@ -7,7 +7,7 @@ add_library(drivers_board
 	spi.cpp
 	timer_config.cpp
 	# esp32p4_board_usb.c
-	manifest.c
+	# manifest.c
 	esp32p4_adc.c
 	mtd.cpp
 	esp32p4_app_desc.c

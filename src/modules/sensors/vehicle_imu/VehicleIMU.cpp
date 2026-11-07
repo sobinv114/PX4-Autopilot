@@ -231,7 +231,9 @@ void VehicleIMU::Run()
 		while (_sensor_accel_sub.updated()
 		       && (sensor_accel_sub_updates < sensor_accel_s::ORB_QUEUE_LENGTH)
 		       && (!_accel_integrator.integral_ready() || !_intervals_configured || _data_gap
-			   || (_accel_timestamp_sample_last < (_gyro_timestamp_sample_last - 0.5f * _accel_interval_us)))
+			//    || (_accel_timestamp_sample_last < (_gyro_timestamp_sample_last - 0.5f * _accel_interval_us)))
+			   || ((int64_t)(_gyro_timestamp_sample_last - _accel_timestamp_sample_last) > (int32_t)(0.5f * _accel_interval_us)))
+
 		      ) {
 
 			sensor_accel_sub_updates++;
@@ -294,7 +296,8 @@ bool VehicleIMU::UpdateAccel()
 			// collect sample interval average for filters
 			if (accel.timestamp_sample > _accel_timestamp_sample_last) {
 				if (_accel_timestamp_sample_last != 0) {
-					const float interval_us = accel.timestamp_sample - _accel_timestamp_sample_last;
+					// const float interval_us = accel.timestamp_sample - _accel_timestamp_sample_last;
+					const float interval_us = (float)(uint32_t)(accel.timestamp_sample - _accel_timestamp_sample_last);
 
 					_accel_mean_interval_us.update(interval_us);
 					_accel_fifo_mean_interval_us.update(interval_us / math::max(accel.samples, (uint8_t)1));
@@ -348,7 +351,8 @@ bool VehicleIMU::UpdateAccel()
 		}
 
 
-		const float dt = (accel.timestamp_sample - _accel_timestamp_sample_last) * 1e-6f;
+		// const float dt = (accel.timestamp_sample - _accel_timestamp_sample_last) * 1e-6f;
+		const float dt = (float)(uint32_t)(accel.timestamp_sample - _accel_timestamp_sample_last) * 1e-6f;
 		_accel_timestamp_sample_last = accel.timestamp_sample;
 
 		const Vector3f accel_raw{accel.x, accel.y, accel.z};
@@ -424,7 +428,8 @@ bool VehicleIMU::UpdateGyro()
 			if (gyro.timestamp_sample > _gyro_timestamp_sample_last) {
 				if (_gyro_timestamp_sample_last != 0) {
 
-					const float interval_us = gyro.timestamp_sample - _gyro_timestamp_sample_last;
+					// const float interval_us = gyro.timestamp_sample - _gyro_timestamp_sample_last;
+					const float interval_us = (float)(uint32_t)(gyro.timestamp_sample - _gyro_timestamp_sample_last);
 
 					_gyro_mean_interval_us.update(interval_us);
 					_gyro_fifo_mean_interval_us.update(interval_us / math::max(gyro.samples, (uint8_t)1));
@@ -456,7 +461,9 @@ bool VehicleIMU::UpdateGyro()
 
 		_gyro_last_generation = _sensor_gyro_sub.get_last_generation();
 
-		const float dt = (gyro.timestamp_sample - _gyro_timestamp_sample_last) * 1e-6f;
+		// const float dt = (gyro.timestamp_sample - _gyro_timestamp_sample_last) * 1e-6f;
+		const float dt = (float)(uint32_t)(gyro.timestamp_sample - _gyro_timestamp_sample_last) * 1e-6f;
+
 
 		_gyro_timestamp_sample_last = gyro.timestamp_sample;
 		_gyro_timestamp_last = gyro.timestamp;
@@ -668,8 +675,12 @@ bool VehicleIMU::Publish()
 			_delta_velocity_clipping = 0;
 
 			// record gyro publication latency and integrated samples
-			_gyro_publish_latency_mean_us.update(imu.timestamp - _gyro_timestamp_last);
-			_gyro_update_latency_mean_us.update(imu.timestamp - _gyro_timestamp_sample_last);
+			// _gyro_publish_latency_mean_us.update(imu.timestamp - _gyro_timestamp_last);
+			// _gyro_update_latency_mean_us.update(imu.timestamp - _gyro_timestamp_sample_last);
+
+			// record gyro publication latency and integrated samples
+			_gyro_publish_latency_mean_us.update((float)(uint32_t)(imu.timestamp - _gyro_timestamp_last));
+			_gyro_update_latency_mean_us.update((float)(uint32_t)(imu.timestamp - _gyro_timestamp_sample_last));
 
 			updated = true;
 		}

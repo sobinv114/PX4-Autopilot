@@ -148,7 +148,7 @@ static inline constexpr px4_spi_bus_all_hw_t initSPIHWVersion(int hw_version_rev
 		ret.buses[i] = bus_items.item[i];
 	}
 
-	ret.board_hw_version_revision = hw_version_revision;
+	// ret.board_hw_version_revision = hw_version_revision;
 	return ret;
 }
 

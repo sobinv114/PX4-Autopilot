@@ -4,7 +4,7 @@ MEMORY
   tcm_idram_seg (RX) : org = 0x30100000, len = 0x2000
   irom_seg (RX) : org = 0x40000000, len = (0x10000 << 10)
   sram_low (RWX) : org = 0x4FF00000, len = 0x4FF2CBD0 - 0x4FF00000
-  sram_high (RW) : org = 0x4FF40000, len = 0x80000 - 0x20000
+  sram_high (RW) : org = 0x4FF40000, len = 0x80000 - 0x40000
   drom_seg (R) : org = 0x40000000, len = (0x10000 << 10)
   rev3_mspi_workaround_seg(RWX) : org = 0x50108000, len = 0x0
   lp_ram_seg(RW) : org = 0x50108000 + 0x0 + (0 + (24)), len = 0x8000 - (0 + (24)) - 0x0

@@ -59,20 +59,21 @@
 #include <px4_arch/micro_hal.h>
 
 
-#define BOARD_HAVE_HW_SPLIT 1
 
+// #define BOARD_HAVE_HW_SPLIT 1
+#define BOARD_HAS_HW_SPLIT_VERSIONING 1
+#define HW_INFO_INIT_PREFIX "ESP32P4"
 /* ========================================================================= */
 /* PX4IO Connection Configuration                                            */
 /* ========================================================================= */
-
 #define BOARD_USES_PX4IO_VERSION       2
 /* Add static MFT so PX4IO is always “present” */
 #define BOARD_HAS_STATIC_MANIFEST  1
 #define PX4_MFT_HW_SUPPORTED_PX4_MFT_PX4IO  1
-#define PX4IO_SERIAL_DEVICE            "/dev/ttyS2"         /* Corresponding to UART2 */
+#define PX4IO_SERIAL_DEVICE            "/dev/ttyS2"   /* Corresponding to UART2 */
 #define PX4IO_SERIAL_TX_GPIO           GPIO_UART2_TX
 #define PX4IO_SERIAL_RX_GPIO           GPIO_UART2_RX
-#define PX4IO_SERIAL_BITRATE           1500000   /* Temporarily change from 1500000 */
+#define PX4IO_SERIAL_BITRATE           1500000
 
 
 /* ========================================================================= */
@@ -101,8 +102,6 @@
 /* ESP32-P4 I2C Pin Definitions                                              */
 /* ========================================================================= */
 
-// #define BOARD_I2C_BUS_MAX_BUS_ITEMS    3
-// #define I2C_BUS_MAX_BUS_ITEMS          BOARD_I2C_BUS_MAX_BUS_ITEMS
 
 #define GPIO_I2C0_SDA                   22
 #define GPIO_I2C0_SCL                   23
@@ -119,20 +118,17 @@
 
 /* SPI2 (Bus 2) */
 #define GPIO_SPI2_CS                    CONFIG_ESPRESSIF_SPI2_CSPIN
+#define GPIO_SPI2_CS2                   CONFIG_ESPRESSIF_SPI2_CSPIN2
 #define GPIO_SPI2_CLK                   CONFIG_ESPRESSIF_SPI2_CLKPIN
 #define GPIO_SPI2_MOSI                  CONFIG_ESPRESSIF_SPI2_MOSIPIN
 #define GPIO_SPI2_MISO                  CONFIG_ESPRESSIF_SPI2_MISOPIN
 
-// CONFIG_ESPRESSIF_SPI2_CSPIN=31
-// CONFIG_ESPRESSIF_SPI2_CLKPIN=30
-// CONFIG_ESPRESSIF_SPI2_MOSIPIN=29
-// CONFIG_ESPRESSIF_SPI2_MISOPIN=28
 
 /* SPI3 (Bus 3) */
-#define GPIO_SPI3_CS                    20
-#define GPIO_SPI3_MOSI                  21
-#define GPIO_SPI3_CLK                   26
-#define GPIO_SPI3_MISO                  27
+#define GPIO_SPI3_CS                    CONFIG_ESPRESSIF_SPI3_CSPIN
+#define GPIO_SPI3_CLK                   CONFIG_ESPRESSIF_SPI3_CLKPIN
+#define GPIO_SPI3_MOSI                  CONFIG_ESPRESSIF_SPI3_MOSIPIN
+#define GPIO_SPI3_MISO                  CONFIG_ESPRESSIF_SPI3_MISOPIN
 
 #define BOARD_SPI_BUS_MAX_BUS_ITEMS     8
 
@@ -154,12 +150,6 @@
 /* ========================================================================= */
 
 #define HRT_TIMER                       0
-
-
-/* PWM input driver. Use FMU AUX5 pins attached to timer4 channel 2 */
-// #define PWMIN_TIMER          1          /* MUST be != HRT_TIMER */
-// #define PWMIN_TIMER_CHANNEL  1
-// #define GPIO_PWM_IN          (GPIO_INPUT | 9)
 
 #define PWMIN_CAPTURE_DEVICE  "/dev/cap0"   /* or /dev/cap1 */
 
@@ -218,14 +208,6 @@
 #define S_RGB_LED_RMT_CHANNEL       0
 #define S_RGB_LED_BRIGHTNESS        3  /* 1..255, 255 = full */
 
-// /* Tone alarm output */
-
-// /* Tone alarm output (LEDC timer 2) */
-// #define TONE_ALARM_LEDC_TIMER   2
-// #define BUZZER_GPIO_NUM         12   /* same pin as CONFIG_ESPRESSIF_LEDC_CHANNEL2_PIN */
-
-// #define GPIO_BUZZER_1           (GPIO_OUTPUT | BUZZER_GPIO_NUM)
-// #define GPIO_TONE_ALARM_IDLE    GPIO_BUZZER_1
 
 /* ========================================================================= */
 /* Tone Alarm / Buzzer Configuration                                        */
@@ -260,8 +242,6 @@
 #define GPIO_BTN_SAFETY                GPIO_SAFETY_SWITCH_IN
 
 
-
-
 /* Power switch controls ******************************************************/
 
 
@@ -283,6 +263,10 @@ extern void board_peripheral_reset(int ms);
 
 #include <px4_platform_common/board_common.h>
 
+#ifdef GET_HW_BASE_ID
+#  undef GET_HW_BASE_ID
+#endif
+#define GET_HW_BASE_ID() board_get_hw_base_id()
 
 /* Undefine the fallback macros from board_common.h */
 #ifdef board_determine_hw_info
@@ -307,9 +291,11 @@ __EXPORT int board_determine_hw_info(void);
 __EXPORT int board_get_hw_revision(void);
 __EXPORT int board_get_hw_version(void);
 __EXPORT const char *board_get_hw_type_name(void);
+__EXPORT const char *board_get_hw_base_type_name(void);
+__EXPORT hw_base_id_t board_get_hw_base_id(void);
 __END_DECLS
-
 
 #endif /* __ASSEMBLY__ */
 
 __END_DECLS
+

@@ -72,12 +72,18 @@ void DataValidator::put(uint64_t timestamp, const float val[dimensions], uint32_
 				_M2[i] = 0;
 
 			} else {
-				float lp_val = val[i] - _lp[i];
+				// float lp_val = val[i] - _lp[i];
+				// float delta_val = lp_val - _mean[i];
+				// _mean[i] += delta_val / _event_count;
+				// _M2[i] += delta_val * (lp_val - _mean[i]);
+				// _rms[i] = sqrtf(_M2[i] / (_event_count - 1));
 
+				float lp_val = val[i] - _lp[i];
+				const float count_f = (float)(uint32_t)_event_count;
 				float delta_val = lp_val - _mean[i];
-				_mean[i] += delta_val / _event_count;
+				_mean[i] += delta_val / count_f;
 				_M2[i] += delta_val * (lp_val - _mean[i]);
-				_rms[i] = sqrtf(_M2[i] / (_event_count - 1));
+				_rms[i] = sqrtf(_M2[i] / (count_f - 1.0f));
 
 				if (fabsf(_value[i] - val[i]) < 0.000001f) {
 					_value_equal_count++;

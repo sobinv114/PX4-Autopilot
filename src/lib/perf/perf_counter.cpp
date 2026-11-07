@@ -361,11 +361,18 @@ perf_set_elapsed(perf_counter_t handle, int64_t elapsed)
 
 				// maintain mean and variance of the elapsed time in seconds
 				// Knuth/Welford recursive mean and variance of update intervals (via Wikipedia)
-				float dt = elapsed / 1e6f;
+				// float dt = elapsed / 1e6f;
+				// float mean_val = pce->mean.load();
+				// float delta_intvl = dt - mean_val;
+				// mean_val += delta_intvl / ec;
+				// pce->mean.store(mean_val);
+
+				float dt = (float)(uint32_t)elapsed * 1e-6f;
 				float mean_val = pce->mean.load();
 				float delta_intvl = dt - mean_val;
-				mean_val += delta_intvl / ec;
+				mean_val += delta_intvl / (float)(uint32_t)ec;
 				pce->mean.store(mean_val);
+
 				float m2_val = pce->M2.load();
 				m2_val += delta_intvl * (dt - mean_val);
 				pce->M2.store(m2_val);
@@ -425,11 +432,18 @@ perf_count_interval(perf_counter_t handle, hrt_abstime now)
 
 					// maintain mean and variance of interval in seconds
 					// Knuth/Welford recursive mean and variance of update intervals (via Wikipedia)
-					float dt = interval / 1e6f;
+					// float dt = interval / 1e6f;
+					// float mean_val = pci->mean.load();
+					// float delta_intvl = dt - mean_val;
+					// mean_val += delta_intvl / ec;
+					// pci->mean.store(mean_val);
+
+					float dt = (float)(uint32_t)interval * 1e-6f;
 					float mean_val = pci->mean.load();
 					float delta_intvl = dt - mean_val;
-					mean_val += delta_intvl / ec;
+					mean_val += delta_intvl / (float)(uint32_t)ec;
 					pci->mean.store(mean_val);
+
 					float m2_val = pci->M2.load();
 					m2_val += delta_intvl * (dt - mean_val);
 					pci->M2.store(m2_val);

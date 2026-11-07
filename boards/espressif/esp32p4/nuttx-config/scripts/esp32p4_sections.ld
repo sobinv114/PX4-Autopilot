@@ -299,8 +299,9 @@ SECTIONS
     *libarch.a:memspi_host_driver.*(.literal .literal.* .text .text.*)
 
     *libc.a:sq_remlast.*(.literal .text .literal.* .text.*)
-    *libgcc.a:*(.literal .text .literal.* .text.*)
-    
+    /* *libgcc.a:*(.literal .text .literal.* .text.*) */
+    *libgcc.a:*(EXCLUDE_FILE(*libgcc.a:addtf3.* *libgcc.a:subtf3.* *libgcc.a:multf3.* *libgcc.a:divtf3.* *libgcc.a:eqtf2.* *libgcc.a:getf2.* *libgcc.a:letf2.* *libgcc.a:negtf2.* *libgcc.a:unordtf2.* *libgcc.a:fixtfsi.* *libgcc.a:fixunstfsi.* *libgcc.a:floatsitf.* *libgcc.a:floatunsitf.* *libgcc.a:fixtfdi.* *libgcc.a:fixunstfdi.* *libgcc.a:floatditf.* *libgcc.a:floatunditf.* *libgcc.a:extendsftf2.* *libgcc.a:extenddftf2.* *libgcc.a:extendhftf2.* *libgcc.a:trunctfsf2.* *libgcc.a:trunctfdf2.* *libgcc.a:trunctfhf2.* *libgcc.a:_powitf2.*) .literal .text .literal.* .text.*)
+
 
     esp_head.*(.literal .text .literal.* .text.*)
     esp_start.*(.literal .text .literal.* .text.*)

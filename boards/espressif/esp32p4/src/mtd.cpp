@@ -43,33 +43,89 @@
 #include <nuttx/spi/spi.h>
 #include <px4_platform_common/px4_manifest.h>
 
+
 /*
  * On-chip SPI Flash MTD storage device definition for ESP32-P4
  */
-static const px4_mft_device_t esp32p4_storage = {
+static const px4_mft_device_t esp_qspi_flash = {
 	.bus_type = px4_mft_device_t::ONCHIP,
 	// .devid    = 0
 };
+
+//                                                              KiB BS    nB
+static const px4_mft_device_t i2c1 = {             // 24LC64T on IMU  8K 32 X 256
+	.bus_type = px4_mft_device_t::I2C,
+	.devid    = PX4_MK_I2C_DEVID(1, 0x50)
+};
+static const px4_mft_device_t i2c2 = {             // 24LC64T on BASE  8K 32 X 256
+	.bus_type =  px4_mft_device_t::I2C,
+	.devid    =  PX4_MK_I2C_DEVID(2, 0x51)
+};
+
 
 /*
  * MTD Parameter partition: allocated 32 blocks (128 KB) at /fs/mtd_params
  */
 static const px4_mtd_entry_t esp32p4_params = {
-	.device  = &esp32p4_storage,
+	.device  = &esp_qspi_flash,
 	.npart   = 1,
 	.partd   = {
 		{
 			.type    = MTD_PARAMETERS,
 			.path    = "/fs/mtd_params",
-			.nblocks = 32
+			.nblocks = 256
 		}
 	},
 };
 
+
+static const px4_mtd_entry_t base_eeprom = {
+	.device = &i2c2,
+	.npart = 2,
+	.partd = {
+		{
+			.type = MTD_MFT_VER,
+			.path = "/fs/mtd_mft_ver",
+			.nblocks = 248
+		},
+		{
+			.type = MTD_NET,
+			.path = "/fs/mtd_net",
+			.nblocks = 8 // 256 = 32 * 8
+
+		}
+	},
+};
+
+static const px4_mtd_entry_t imu_eeprom = {
+	.device = &i2c1,
+	.npart = 3,
+	.partd = {
+		{
+			.type = MTD_CALDATA,
+			.path = "/fs/mtd_caldata",
+			.nblocks = 240
+		},
+		{
+			.type = MTD_MFT_REV,
+			.path = "/fs/mtd_mft_rev",
+			.nblocks = 8
+		},
+		{
+			.type = MTD_ID,
+			.path = "/fs/mtd_id",
+			.nblocks = 8 // 256 = 32 * 8
+		}
+	},
+};
+
+
 static const px4_mtd_manifest_t board_mtd_config = {
-	.nconfigs = 1,
+	.nconfigs = 3,
 	.entries  = {
-		&esp32p4_params
+		&esp32p4_params,
+		&base_eeprom,
+		&imu_eeprom
 	}
 };
 
@@ -78,12 +134,33 @@ static const px4_mft_entry_s mtd_mft = {
 	.pmft = (void *)&board_mtd_config,
 };
 
+static const px4_mft_entry_s mft_mft = {
+	.type = MFT,
+	.pmft = (void *) system_query_manifest,
+};
+
 static const px4_mft_s mft = {
-	.nmft = 1,
-	.mfts = {&mtd_mft}
+	.nmft = 2,
+	.mfts = {
+		&mtd_mft,
+		&mft_mft,
+	}
 };
 
 const px4_mft_s *board_get_manifest(void)
 {
 	return &mft;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
